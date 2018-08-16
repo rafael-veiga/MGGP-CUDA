@@ -78,7 +78,31 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="Configures.cu" />
+    <CudaCompile Include="Database.cu" />
+    <CudaCompile Include="Gramatica.cu" />
     <CudaCompile Include="main.cu" />
+    <CudaCompile Include="No.cu" />
+    <CudaCompile Include="Operators.cu" />
+    <CudaCompile Include="Parser.cu" />
+    <CudaCompile Include="Population.cu" />
+    <CudaCompile Include="QRDecomposition.cu" />
+    <CudaCompile Include="Search.cu" />
+    <CudaCompile Include="Subject.cu" />
+    <CudaCompile Include="Tree.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Configures.h" />
+    <ClInclude Include="Database.h" />
+    <ClInclude Include="Gramatica.h" />
+    <ClInclude Include="No.h" />
+    <ClInclude Include="Operators.h" />
+    <ClInclude Include="Parser.h" />
+    <ClInclude Include="Population.h" />
+    <ClInclude Include="QRDecomposition.h" />
+    <ClInclude Include="Search.h" />
+    <ClInclude Include="Subject.h" />
+    <ClInclude Include="Tree.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
