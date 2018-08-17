@@ -7,8 +7,9 @@
 
 #ifndef CONFIGURES_INCLUDED
 #define CONFIGURES_INCLUDED
-#include <stdlib.h>
-#include <cuda_runtime.h>
+
+#include "device_launch_parameters.h"
+//#include <cuda_runtime.h>
 
 class Configures {
 public:
@@ -24,7 +25,7 @@ public:
 	int complexity = 0; //0=high 1=terminals
 
 	__host__ __device__  Configures();
-
+	
 };
 
 extern Configures* h_conf;

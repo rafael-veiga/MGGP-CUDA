@@ -11,4 +11,3 @@
 
 Configures::Configures() {
 }
-

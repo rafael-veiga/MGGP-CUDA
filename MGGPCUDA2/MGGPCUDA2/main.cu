@@ -1,6 +1,6 @@
 
 #include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include "device_launch_parameters.h"	
 #include <cstdio>
 #include <iostream>
 #include <ctime>
@@ -19,9 +19,14 @@
 
 using namespace std;
 
-/*
-*
-*/
+Configures* h_conf;
+Configures* d_conf;
+
+__global__ void print(Configures* d_conf) {
+	//cout << "O valor device" << blockIdx.x << " treeHigh = " << d_conf->treeHigh << endl;
+	printf("O valor da altura da arvore no DEVICE_%d = %d\n", blockIdx.x, d_conf->treeHigh);
+}
+
 int main(int argc, char** args) {
 
 	// imprimindo argumentos
@@ -54,22 +59,28 @@ int main(int argc, char** args) {
 	h_conf->mono = 1; // 0 = monobjetivo;  1 = multiobjetivo
 					  //conf->complexity = complexidade; // 0 = high 1 = terminals
 	h_conf->complexity = 1;
+	size_t tam = sizeof(Configures);
+	cudaMalloc(&d_conf, tam);
+	cudaMemcpy(d_conf, h_conf, tam, cudaMemcpyHostToDevice);
+	dim3 block(3);
+
+	print<<<block,1>>>(d_conf);
 	//gramatica
-	gram = new Gramatica(gramatica);
-	// cout<< "fim da gramatica" << endl;
-	//operadores
-	// cout << "inicio do operadores" << endl;
-	// gram->imprimeGramatica();
-	op = new Operators();
-	// cout << "fim do operadores" << endl << "inicio dos database" << endl;
-	//dados
-	//    data = new Database("read/base5.txt", "read/grupo5.txt");
-	Database *banco_dados = new Database(dados, grupo);
-	//banco_dados->print();
-	//cout << "fim do database" << endl << "inicio do search" << endl;
-	//busca
-	Search* s = new Search(banco_dados);
-	delete s;
+	//gram = new Gramatica(gramatica);
+	//// cout<< "fim da gramatica" << endl;
+	////operadores
+	//// cout << "inicio do operadores" << endl;
+	//// gram->imprimeGramatica();
+	//op = new Operators();
+	//// cout << "fim do operadores" << endl << "inicio dos database" << endl;
+	////dados
+	////    data = new Database("read/base5.txt", "read/grupo5.txt");
+	//Database *banco_dados = new Database(dados, grupo);
+	////banco_dados->print();
+	////cout << "fim do database" << endl << "inicio do search" << endl;
+	////busca
+	//Search* s = new Search(banco_dados);
+	//delete s;
 
 	fclose(stdout);
 
