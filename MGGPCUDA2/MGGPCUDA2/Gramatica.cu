@@ -6,7 +6,7 @@
 */
 #include "Gramatica.h"
 
-Gramatica* gram;
+
 
 void Gramatica::addRegra(Regra* r) {
 	Regras.push_back(r);

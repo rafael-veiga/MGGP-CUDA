@@ -80,7 +80,7 @@ void Search::doMonoSearch() {
 	convergence = new double[h_conf->iterations];
 
 	for (int i = 0; i < h_conf->popSize; i++) { //Cria população
-		pop[i] = new Subject(gram->criaArvExp());
+		pop[i] = new Subject(h_gram->criaArvExp());
 	}
 
 	for (int i = 0; i < h_conf->popSize; i++) //Calcula primeira vez
@@ -151,7 +151,7 @@ void Search::doMultiSearch() {
 	convergence = new double[h_conf->iterations];
 
 	for (int i = 0; i < h_conf->popSize; i++) { //Cria população
-		pop[i] = new Subject(gram->criaArvExp());
+		pop[i] = new Subject(h_gram->criaArvExp());
 	}
 
 	for (int i = 0; i < h_conf->popSize; i++) {

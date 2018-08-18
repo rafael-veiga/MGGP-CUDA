@@ -15,7 +15,7 @@ Population::Population(Population* p) {
 Population::Population() {
 	for (int i = 0; i < h_conf->popSize; i++) {
 		//        pop[i] = new Subject(gram->criaArvExp(), objectives);
-		pop.push_back(new Subject(gram->criaArvExp()));
+		pop.push_back(new Subject(h_gram->criaArvExp()));
 	}
 };
 

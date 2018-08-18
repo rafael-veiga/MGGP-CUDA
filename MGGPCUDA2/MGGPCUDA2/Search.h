@@ -11,6 +11,8 @@
 #include <vector>
 #include <limits>
 
+extern Gramatica* h_gram;
+
 class Search {
 public:
 	Database * banco_dados;

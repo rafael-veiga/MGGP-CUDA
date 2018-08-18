@@ -98,7 +98,7 @@ void Operators::Mutate(Tree* t) {
 		n->clean();
 		//           for(int i = 0; i < n->countSons; i++)
 		//               delete n->sons.at(i);
-		gram->criaNo(n, n->deep);
+		h_gram->criaNo(n, n->deep);
 		t->refresh();
 		//           cout << "Mut ok\n";
 	}
@@ -120,9 +120,9 @@ void Operators::Cross(Tree* a, Tree* b, Tree* c, Tree* d) {
 	//           d->print();
 
 	No* cRoot = new No();
-	gram->criaNoGuiado(cRoot, a->root);
+	h_gram->criaNoGuiado(cRoot, a->root);
 	No* dRoot = new No();
-	gram->criaNoGuiado(dRoot, b->root);
+	h_gram->criaNoGuiado(dRoot, b->root);
 
 	c->setTree(cRoot);
 	d->setTree(dRoot);

@@ -6,6 +6,8 @@
 #include "No.h"
 #include "Configures.h"
 
+extern Gramatica* h_gram;
+
 class Operators {
 
 public:

@@ -56,7 +56,7 @@ void Database::loadGroups(string groups) {
 
 	int *temp = new int[countVar];
 	for (int i = 0; i < countVar; i++)
-		temp[i] = gram->checkMapV(vars[i]);
+		temp[i] = h_gram->checkMapV(vars[i]);
 
 
 	for (int i = 0; i < countVar; i++) {

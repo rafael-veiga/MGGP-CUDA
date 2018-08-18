@@ -179,6 +179,7 @@ public:
 	void criaNoGuiado(No* n, No* q);
 };
 
-extern Gramatica* gram;
+extern Gramatica* h_gram;
+extern Gramatica* d_gram;
 
 #endif // GRAMATICA_H_INCLUDED

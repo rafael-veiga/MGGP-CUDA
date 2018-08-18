@@ -21,14 +21,16 @@ using namespace std;
 
 Configures* h_conf;
 Configures* d_conf;
+Gramatica* h_gram;
+Gramatica* d_gram;
 
 __global__ void print(Configures* d_conf) {
 	//cout << "O valor device" << blockIdx.x << " treeHigh = " << d_conf->treeHigh << endl;
-	printf("O valor da altura da arvore no DEVICE_%d = %d\n", blockIdx.x, d_conf->treeHigh);
+	d_conf->treeHigh = 7;
 }
 
 int main(int argc, char** args) {
-
+	cudaError_t cudaStatus;
 	// imprimindo argumentos
 	//    for(int i=0; i<argc;i++){
 	//    cout << " " << args[i];    
@@ -59,14 +61,14 @@ int main(int argc, char** args) {
 	h_conf->mono = 1; // 0 = monobjetivo;  1 = multiobjetivo
 					  //conf->complexity = complexidade; // 0 = high 1 = terminals
 	h_conf->complexity = 1;
-	size_t tam = sizeof(Configures);
-	cudaMalloc(&d_conf, tam);
-	cudaMemcpy(d_conf, h_conf, tam, cudaMemcpyHostToDevice);
-	dim3 block(3);
-
-	print<<<block,1>>>(d_conf);
+	const size_t tam = sizeof(Configures);
+	 cudaMalloc(&d_conf, tam);
+	 cudaMemcpy(d_conf, h_conf, tam, cudaMemcpyHostToDevice);
+	
+	
+	
 	//gramatica
-	//gram = new Gramatica(gramatica);
+	h_gram = new Gramatica(gramatica);
 	//// cout<< "fim da gramatica" << endl;
 	////operadores
 	//// cout << "inicio do operadores" << endl;
@@ -81,9 +83,9 @@ int main(int argc, char** args) {
 	////busca
 	//Search* s = new Search(banco_dados);
 	//delete s;
-
+	cudaFree(d_conf);
 	fclose(stdout);
-
+	cudaDeviceReset();
 	return 0;
 }
 

@@ -5,6 +5,8 @@
 #include "Subject.h"
 #include "Configures.h"
 
+extern Gramatica* h_gram;
+
 class Population {
 public:
 	//        Subject* pop[conf->popSize];

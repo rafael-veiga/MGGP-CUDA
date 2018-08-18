@@ -10,7 +10,7 @@
 
 using namespace std;
 
-
+extern Gramatica* h_gram;
 
 class Database {
 public:
