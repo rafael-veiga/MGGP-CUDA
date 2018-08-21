@@ -67,5 +67,8 @@ public:
 
 };
 
+extern Configures* h_conf;
+extern Configures* d_conf;
+
 #endif // TREE_H_INCLUDED
 

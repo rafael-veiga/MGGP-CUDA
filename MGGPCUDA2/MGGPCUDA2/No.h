@@ -5,6 +5,9 @@
 #include <string>
 #include "Configures.h"
 
+extern Configures* h_conf;
+extern Configures* d_conf;
+
 class No {
 public:
 	double type;

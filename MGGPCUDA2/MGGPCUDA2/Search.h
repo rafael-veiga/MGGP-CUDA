@@ -11,6 +11,8 @@
 #include <vector>
 #include <limits>
 
+extern Configures* h_conf;
+extern Configures* d_conf;
 class Search {
 public:
 	Database * banco_dados;

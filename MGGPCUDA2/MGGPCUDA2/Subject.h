@@ -41,4 +41,7 @@ public:
 	void print();
 };
 
+extern Configures* h_conf;
+extern Configures* d_conf;
+
 #endif // SUBJECT_H_INCLUDED

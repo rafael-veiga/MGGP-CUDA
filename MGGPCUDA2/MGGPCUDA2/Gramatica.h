@@ -20,6 +20,10 @@
 #include "Tree.h"
 #include "Configures.h"
 
+
+extern Configures* h_conf;
+extern Configures* d_conf;
+
 using namespace std;
 //NODE
 class Node {

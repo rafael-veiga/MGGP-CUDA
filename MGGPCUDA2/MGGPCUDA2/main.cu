@@ -18,7 +18,8 @@
 #include "Search.h"
 
 using namespace std;
-
+Configures* h_conf;
+Configures* d_conf;
 /*
 *
 */
