@@ -23,6 +23,10 @@ Configures* d_conf;
 /*
 *
 */
+__global__ void teste(Database* d_dados) {
+	d_dados->countVar = 20;
+}
+
 int main(int argc, char** args) {
 
 	// imprimindo argumentos
@@ -66,6 +70,8 @@ int main(int argc, char** args) {
 	//dados
 	//    data = new Database("read/base5.txt", "read/grupo5.txt");
 	Database *banco_dados = new Database(dados, grupo);
+	Database* d_banco_dados =banco_dados->copyDevice();
+	teste<<<1, 1>>>(d_banco_dados);
 	//banco_dados->print();
 	//cout << "fim do database" << endl << "inicio do search" << endl;
 	//busca

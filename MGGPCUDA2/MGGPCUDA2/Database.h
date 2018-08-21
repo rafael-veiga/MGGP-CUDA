@@ -27,7 +27,8 @@ public:
 	int* validation;
 	int validCount;
 
-	Database(string base, string groups);
+	__host__ __device__ Database(string base, string groups);
+	__host__ Database* copyDevice();
 	void loadBase(string base);
 	void loadGroups(string groups);
 	void print();

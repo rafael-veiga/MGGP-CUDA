@@ -2,6 +2,15 @@
 
 //Database* data;
 
+Database* Database::copyDevice() {
+	Database* device;
+	cudaMalloc(&device, sizeof(Database));
+	cudaMemcpy(device, this, sizeof(Database), cudaMemcpyHostToDevice);
+	cudaMalloc(&device->vars, sizeof(string)*this->countVar);
+	cudaMemcpy(device->vars, this->vars, sizeof(string)*this->countVar, cudaMemcpyHostToDevice);
+	return device;
+}
+
 Database::Database(string base, string groups) {
 	loadBase(base);
 	loadGroups(groups);
