@@ -2,6 +2,16 @@
 
 //Database* data;
 
+Database* Database::clone() {
+	Database* novo = new Database();
+	novo->countResults = this->countResults;
+	novo->countTestValues = this->countTestValues;
+	novo->countVar = this->countVar;
+	novo->testCount = this->testCount;
+	novo->trainCount = this->trainCount;
+	novo->validCount = this->validCount;
+}
+
 char** Database::arrayStringAlocate(string* arraystr) {
 	char** saida;
 	char** aux = (char**) malloc(sizeof(char*)*arraystr->length());
@@ -15,14 +25,8 @@ char** Database::arrayStringAlocate(string* arraystr) {
 	return saida;
 }
 
-void Database::destroiArrayString(char** arrayString,int size) {
-	for (int i = 0; i < size; i++) {
-		cudaFree(arrayString[i]);
-	}
-	cudaFree(arrayString);
-}
-
 Database* Database::copyDevice() {
+	
 	Database* device;
 	this->d_vars = arrayStringAlocate(this->vars);
 	cudaMalloc(&device, sizeof(Database));

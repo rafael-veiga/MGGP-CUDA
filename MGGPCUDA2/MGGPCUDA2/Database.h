@@ -27,7 +27,9 @@ public:
 	int testCount;
 	int* validation;
 	int validCount;
-
+	
+	__host__ Database* clone();
+	__host__ __device__ Database() = default;
 	__host__ __device__ Database(string base, string groups);
 	__host__ Database* copyDevice();
 	void loadBase(string base);
@@ -36,8 +38,8 @@ public:
 	//void selectData();
 	double* getVars(int position);
 private:
-	char** arrayStringAlocate(string* array);
-	void destroiArrayString(char** array, int size);
+__host__	char** arrayStringAlocate(string* array);
+__host__	double** alocateValues();
 
 
 };
