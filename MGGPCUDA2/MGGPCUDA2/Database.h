@@ -16,6 +16,7 @@ class Database {
 public:
 	int countVar; //quantidade de variaveis no arquivo texto
 	string* vars;
+	char** d_vars;
 	int countTestValues;
 	double** values; //totalResultados x totalVariaveis
 	int countResults;
@@ -34,6 +35,9 @@ public:
 	void print();
 	//void selectData();
 	double* getVars(int position);
+private:
+	char** arrayStringAlocate(string* array);
+	void destroiArrayString(char** array, int size);
 
 
 };

@@ -2,12 +2,32 @@
 
 //Database* data;
 
+char** Database::arrayStringAlocate(string* arraystr) {
+	char** saida;
+	char** aux = (char**) malloc(sizeof(char*)*arraystr->length());
+	for (int i = 0; i < arraystr->length(); i++) {
+		cudaMalloc(&aux[i],sizeof(char)*30);
+		cudaMemcpy(aux[i], arraystr[i].c_str(), sizeof(char) * 30, cudaMemcpyHostToDevice);
+	}
+	cudaMalloc(&saida, sizeof(char*)*arraystr->length());
+	cudaMemcpy(saida, aux, sizeof(char*)*arraystr->length(), cudaMemcpyHostToDevice);
+	free(aux);
+	return saida;
+}
+
+void Database::destroiArrayString(char** arrayString,int size) {
+	for (int i = 0; i < size; i++) {
+		cudaFree(arrayString[i]);
+	}
+	cudaFree(arrayString);
+}
+
 Database* Database::copyDevice() {
 	Database* device;
+	this->d_vars = arrayStringAlocate(this->vars);
 	cudaMalloc(&device, sizeof(Database));
 	cudaMemcpy(device, this, sizeof(Database), cudaMemcpyHostToDevice);
-	cudaMalloc(&device->vars, sizeof(string)*this->countVar);
-	cudaMemcpy(device->vars, this->vars, sizeof(string)*this->countVar, cudaMemcpyHostToDevice);
+	
 	return device;
 }
 
