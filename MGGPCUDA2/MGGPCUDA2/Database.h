@@ -16,7 +16,7 @@ class Database {
 public:
 	int countVar; //quantidade de variaveis no arquivo texto
 	string* vars;
-	char** d_vars;
+	//char** d_vars;
 	int countTestValues;
 	double** values; //totalResultados x totalVariaveis
 	int countResults;
@@ -28,18 +28,19 @@ public:
 	int* validation;
 	int validCount;
 	
-	__host__ Database* clone();
+	//__host__ Database* clone();
 	__host__ __device__ Database() = default;
 	__host__ __device__ Database(string base, string groups);
 	__host__ Database* copyDevice();
+	//__host__  ~Database();
 	void loadBase(string base);
 	void loadGroups(string groups);
 	void print();
 	//void selectData();
 	double* getVars(int position);
 private:
-__host__	char** arrayStringAlocate(string* array);
-__host__	double** alocateValues();
+//__host__	char** arrayStringAlocate(string* array);
+//__host__	double** alocateValues();
 
 
 };

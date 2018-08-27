@@ -72,6 +72,7 @@ int main(int argc, char** args) {
 	Database *banco_dados = new Database(dados, grupo);
 	Database* d_banco_dados =banco_dados->copyDevice();
 	teste<<<1, 1>>>(d_banco_dados);
+	cudaFree(d_banco_dados);
 	//banco_dados->print();
 	//cout << "fim do database" << endl << "inicio do search" << endl;
 	//busca

@@ -281,10 +281,13 @@ int Search::tournamentMulti(int a, int b) {
 }
 
 void Search::Operate() {
+	//instanciar
 	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i += 2) {
 		pop[i] = (new Subject());
 		pop[i + 1] = (new Subject());
-
+	}
+	//mutação e cross
+	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i += 2) {
 		int a, b;
 		int s1 = rand() % h_conf->popSize;
 		int s2 = rand() % h_conf->popSize;
@@ -301,12 +304,15 @@ void Search::Operate() {
 
 		op->Mutate(pop[i]->tree);
 		op->Mutate(pop[i + 1]->tree);
-
-		calcFitnessLS(pop[i]);
-
-		calcFitnessLS(pop[i + 1]);
-
 	}
+
+	//calcFitnessLS 
+	//paralelizar
+	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
+		calcFitnessLS(pop[i]);
+	}
+
+	
 };
 
 bool Search::dominate(Subject* a, Subject* b) {

@@ -2,36 +2,59 @@
 
 //Database* data;
 
-Database* Database::clone() {
-	Database* novo = new Database();
-	novo->countResults = this->countResults;
-	novo->countTestValues = this->countTestValues;
-	novo->countVar = this->countVar;
-	novo->testCount = this->testCount;
-	novo->trainCount = this->trainCount;
-	novo->validCount = this->validCount;
-}
+//Database* Database::clone() {
+//	Database* novo = new Database();
+//	novo->countResults = this->countResults;
+//	novo->countTestValues = this->countTestValues;
+//	novo->countVar = this->countVar;
+//	novo->testCount = this->testCount;
+//	novo->trainCount = this->trainCount;
+//	novo->validCount = this->validCount;
+//}
 
-char** Database::arrayStringAlocate(string* arraystr) {
-	char** saida;
-	char** aux = (char**) malloc(sizeof(char*)*arraystr->length());
-	for (int i = 0; i < arraystr->length(); i++) {
-		cudaMalloc(&aux[i],sizeof(char)*30);
-		cudaMemcpy(aux[i], arraystr[i].c_str(), sizeof(char) * 30, cudaMemcpyHostToDevice);
-	}
-	cudaMalloc(&saida, sizeof(char*)*arraystr->length());
-	cudaMemcpy(saida, aux, sizeof(char*)*arraystr->length(), cudaMemcpyHostToDevice);
-	free(aux);
-	return saida;
-}
 
 Database* Database::copyDevice() {
-	
+	Database aux;
 	Database* device;
-	this->d_vars = arrayStringAlocate(this->vars);
-	cudaMalloc(&device, sizeof(Database));
-	cudaMemcpy(device, this, sizeof(Database), cudaMemcpyHostToDevice);
+	aux.countResults = this->countResults;
+	aux.countTestValues = this->countTestValues;
+	aux.countVar = this->countVar;
+	aux.testCount = this->testCount;
+	aux.trainCount = this->trainCount;
+	aux.validCount = this->validCount;
+	//alocar valores
+	cudaMalloc(&aux.values, sizeof(double*)*aux.countResults);
 	
+	double** inter = new double*[aux.countResults];
+	for (int i = 0; i < aux.countResults; i++) {
+		cudaMalloc(&inter[i], sizeof(double)*aux.countVar);
+		cudaMemcpy(inter[i], this->values[i], sizeof(double)*aux.countVar, cudaMemcpyHostToDevice);
+	}
+	
+	cudaMemcpy(aux.values, inter, sizeof(double**)*aux.countResults,cudaMemcpyHostToDevice);
+	delete inter;
+	
+
+	//alocar resultados
+	cudaMalloc(&aux.results, sizeof(double)*aux.countResults);
+	cudaMemcpy(aux.results, this->results, sizeof(double)*aux.countResults, cudaMemcpyHostToDevice);
+
+	//alocar treino
+	cudaMalloc(&aux.training, sizeof(int)*aux.trainCount);
+	cudaMemcpy(aux.training, this->training, sizeof(int)*aux.trainCount, cudaMemcpyHostToDevice);
+
+	//alocar teste
+	cudaMalloc(&aux.test, sizeof(int)*aux.testCount);
+	cudaMemcpy(aux.test, this->test, sizeof(int)*aux.testCount, cudaMemcpyHostToDevice);
+
+	//alocar valida
+	cudaMalloc(&aux.validation, sizeof(int)*aux.validCount);
+	cudaMemcpy(aux.validation, this->validation, sizeof(int)*aux.validCount, cudaMemcpyHostToDevice);
+
+	//carregando objeto
+	cudaMalloc(&device, sizeof(Database));
+	cudaMemcpy(device, &aux, sizeof(Database), cudaMemcpyHostToDevice);
+
 	return device;
 }
 
