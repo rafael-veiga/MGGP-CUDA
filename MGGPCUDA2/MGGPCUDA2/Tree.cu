@@ -12,6 +12,7 @@ Tree::Tree() {
 	alpha = NULL;
 };
 
+
 Tree::~Tree() {
 	delete root;
 	//    for(int i = 0; i < tempCounter; i++)

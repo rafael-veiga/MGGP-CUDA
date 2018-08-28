@@ -10,12 +10,16 @@
 #include <cmath>
 #include <vector>
 #include <limits>
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 
 extern Configures* h_conf;
 extern Configures* d_conf;
 class Search {
 public:
-	Database * banco_dados;
+	Database* banco_dados;
+	Database* d_banco_dados;
+	Configures* d_conf;
 	Population* pop0;
 	Population* pop1;
 	vector<Subject*> popaux;
@@ -39,8 +43,9 @@ public:
 	float peso0;
 	float peso1;
 
-	Search(Database* banco_dados);
+	Search(Database* banco_dados, Database* d_banco);
 	~Search();
+	void GPUcalcFitnessLS(int ini, int fim);
 	void doMonoSearch();
 	void doMultiSearch();
 	int tournamentMono(int a, int b);

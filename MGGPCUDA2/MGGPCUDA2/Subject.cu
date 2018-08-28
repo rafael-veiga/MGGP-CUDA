@@ -4,6 +4,8 @@
 #include "Subject.h"
 #include "Tree.h"
 
+
+
 Subject::Subject() {
 	tree = new Tree();
 	//    fitness = new double[objectives];
@@ -12,6 +14,18 @@ Subject::Subject() {
 	fitnessTestLS = INFINITY;
 	printing = true;
 };
+
+//void Subject::iniDeviceTree() {
+//	size_t tam = sizeof(Tree);
+//	cudaMalloc(&this->d_tree, tam);
+//	cudaMemcpy(this->d_tree, this->tree, tam, cudaMemcpyHostToDevice);
+//
+//
+//}
+//
+//void Subject::destDeviceTree() {
+//	cudaFree(this->d_tree);
+//}
 
 Subject::Subject(Tree* n) {
 	tree = n;

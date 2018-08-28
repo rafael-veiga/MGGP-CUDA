@@ -94,6 +94,7 @@
   <ItemGroup>
     <ClInclude Include="Configures.h" />
     <ClInclude Include="Database.h" />
+    <ClInclude Include="Device_Tree.h" />
     <ClInclude Include="Gramatica.h" />
     <ClInclude Include="No.h" />
     <ClInclude Include="Operators.h" />
@@ -103,6 +104,9 @@
     <ClInclude Include="Search.h" />
     <ClInclude Include="Subject.h" />
     <ClInclude Include="Tree.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Device_Tree.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

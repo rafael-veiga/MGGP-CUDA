@@ -34,7 +34,7 @@ public:
 	int subCounter;
 	int auxSubCounter;
 
-	Tree();
+	 Tree();
 	~Tree();
 	virtual Tree* clone();
 	void setTree(No* n);
@@ -58,12 +58,14 @@ public:
 	void setExp();
 	void getExp(No* n);
 	double treeResult(double* var, double* alpha = NULL, int alphaSize = 0);
+	
 	double* getExp();
 	void setSub();
 	void findLS(No* n);
 	void newFindLS();
 	void makeSub(No* n);
 	vector<double> getSub(int s);
+	
 
 };
 

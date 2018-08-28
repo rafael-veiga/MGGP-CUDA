@@ -3,10 +3,13 @@
 
 #include "Tree.h"
 #include <vector>
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 
 class Subject {
 public:
 	Tree * tree;
+	Tree* d_tree;
 	int complex;
 	double fitnessLS;
 	double fitnessTestLS;
@@ -34,11 +37,14 @@ public:
 	double* fitness;
 	double* fitnessTest;
 
-	Subject();
-	Subject(Tree* n);
+	__host__ __device__ Subject();
+	__host__ __device__ Subject(Tree* n);
+	
 	double complexity();
 	~Subject();
 	void print();
+	//void iniDeviceTree();
+	//void destDeviceTree();
 };
 
 extern Configures* h_conf;

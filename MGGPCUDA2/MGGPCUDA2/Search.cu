@@ -11,7 +11,36 @@
 
 using namespace std;
 
+__global__ void teste(Database* d_dados, Configures* d_conf,Subject** d_pop) {
+	d_dados->countVar = 20;
+}
 
+void Search::GPUcalcFitnessLS(int ini,int fim) {
+	Subject** d_pop;
+	Subject** aux;
+	int tam = fim - ini;
+	aux = new Subject*[tam];
+	//carregando na GPU
+	for (int i = 0; i < tam; i++) {
+		//pop[i + ini]->iniDeviceTree();
+		cudaMalloc(&aux[i], sizeof(Subject));
+		cudaMemcpy(aux[i],pop[i+ini],sizeof(Subject),cudaMemcpyHostToDevice);
+	}
+
+	cudaMalloc(&d_pop, sizeof(Subject*)*tam);
+	cudaMemcpy(d_pop, aux, sizeof(Subject*)*tam, cudaMemcpyHostToDevice);
+
+	
+	//executando
+	teste<<<1, 1>>>(this->d_banco_dados, this->d_conf,d_pop);
+	//descaregando da GPU
+	for (int i = 0; i < tam; i++) {
+		//pop[i + ini]->destDeviceTree();
+		cudaFree(&d_pop[i]);
+	}
+	cudaFree(d_pop);
+	delete aux;
+}
 
 bool mySort(Subject* a, Subject* b) {
 	//    return (a->fitness < b->fitness);
@@ -63,11 +92,14 @@ bool sortCrow(Subject* a, Subject* b) {
 	return (a->crowdingDistance > b->crowdingDistance);
 };
 
-Search::Search(Database *banco_dados) {
+Search::Search(Database* banco_dados, Database* d_banco) {
 	testError = INFINITY;
 	testTr = INFINITY;
 	errors = 0;
 	this->banco_dados = banco_dados;
+	this->d_banco_dados = d_banco;
+	cudaMalloc(&this->d_conf, sizeof(Configures));
+	cudaMemcpy(this->d_conf, h_conf, sizeof(Configures), cudaMemcpyHostToDevice);
 	aux = new int[h_conf->popSize];
 	for (int i = 0; i < h_conf->popSize; i++)
 		aux[i] = 0;
@@ -308,6 +340,10 @@ void Search::Operate() {
 
 	//calcFitnessLS 
 	//paralelizar
+
+	//GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2);
+	GPUcalcFitnessLS(0,h_conf->popSize);
+
 	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
 		calcFitnessLS(pop[i]);
 	}
