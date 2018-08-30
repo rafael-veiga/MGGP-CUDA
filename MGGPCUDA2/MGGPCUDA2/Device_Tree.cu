@@ -9,4 +9,5 @@ Device_Tree::Device_Tree()
 
 Device_Tree::~Device_Tree()
 {
-}
+};
+

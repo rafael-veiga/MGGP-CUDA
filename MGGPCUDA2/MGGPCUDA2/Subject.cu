@@ -15,17 +15,24 @@ Subject::Subject() {
 	printing = true;
 };
 
-//void Subject::iniDeviceTree() {
-//	size_t tam = sizeof(Tree);
-//	cudaMalloc(&this->d_tree, tam);
-//	cudaMemcpy(this->d_tree, this->tree, tam, cudaMemcpyHostToDevice);
-//
-//
-//}
-//
-//void Subject::destDeviceTree() {
-//	cudaFree(this->d_tree);
-//}
+void Subject::iniDeviceTree() {
+	Device_Tree host;
+	size_t tam = sizeof(double);
+	host.expCounter = this->tree->expCounter;
+	cudaMalloc(&host.exp, sizeof(double)*host.expCounter);
+	this->d_tree_exp = host.exp;
+	
+	tam = sizeof(Device_Tree);
+	cudaMalloc(&this->d_tree, tam);
+	cudaMemcpy(this->d_tree, &host, tam, cudaMemcpyHostToDevice);
+
+
+}
+
+void Subject::destDeviceTree() {
+	cudaFree(this->d_tree_exp);
+	cudaFree(this->d_tree);
+}
 
 Subject::Subject(Tree* n) {
 	tree = n;

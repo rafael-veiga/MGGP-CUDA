@@ -2,6 +2,7 @@
 #define SUBJECT_H_INCLUDED
 
 #include "Tree.h"
+#include "Device_Tree.h"
 #include <vector>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
@@ -9,7 +10,8 @@
 class Subject {
 public:
 	Tree * tree;
-	Tree* d_tree;
+	Device_Tree* d_tree;
+	double* d_tree_exp;
 	int complex;
 	double fitnessLS;
 	double fitnessTestLS;
@@ -43,8 +45,9 @@ public:
 	double complexity();
 	~Subject();
 	void print();
-	//void iniDeviceTree();
-	//void destDeviceTree();
+	
+	void iniDeviceTree();
+	void destDeviceTree();
 };
 
 extern Configures* h_conf;

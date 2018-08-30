@@ -8,11 +8,157 @@
 #include "Gramatica.h"
 #include "Configures.h"
 #include "Parser.h"
+#include "Device_Tree.h"
 
 using namespace std;
 
+//class No {
+//public:
+//	double valor;
+//	No* next;
+//	__host__ __device__ No() {
+//		int a = 0;
+//	}
+//};
+
+//class Pilha {
+//public:
+//	No* atual;
+//
+//__device__	Pilha() {
+//
+//	}
+//__device__	void push(double v) {
+//		if (atual == NULL) {
+//			cudaMalloc(&atual, sizeof(No));
+//			atual->valor = v;
+//			atual->next = NULL;
+//		}
+//		else {
+//			No* aux;
+//			cudaMalloc(&aux, sizeof(No));
+//			aux->valor = v;
+//			aux->next = atual;
+//			atual = aux;
+//		}
+//}
+//__device__	double pop() {
+//		No* aux = atual;
+//		double res = atual->valor;
+//		atual = atual->next;
+//		cudaFree(aux);
+//		return res;
+//	}
+//};
+
+__device__ double avalia(double* a, int expCounter) {
+
+	//Pilha q;
+	//int aux;
+	//int countAlpha = 0;
+	//for (int i = 0; i < tam; i += 2) {
+	//	double result = 0.0;
+	//	switch ((int)expr[i]) {
+	//	case 0:
+	//	{
+	//		q.push(expr[i + 1]);
+	//	}
+	//	break;
+	//	case 1:// + - * / pow !
+	//	{
+	//		double b = q.top();
+	//		q.pop();
+	//		double d = q.top();
+	//		q.pop();
+	//		result = opera(d, b, expr[i + 1]);
+	//		q.push(result);
+	//	}
+	//	break;
+	//	case 2:// log exp sqrt
+	//	{
+	//		double n = q.top();
+	//		q.pop();
+	//		result = opera(n, expr[i + 1]);
+	//		q.push(result);
+	//	}
+	//	break;
+	//	case 6:// && || xor
+	//	{
+	//		double a = q.top();
+	//		q.pop();
+	//		double b = q.top();
+	//		q.pop();
+	//		result = operaLogic(b, a, expr[i + 1]);
+	//		q.push(result);
+	//	}
+	//	break;
+	//	case 7:
+	//	{
+	//		double a = q.top();
+	//		q.pop();
+	//		result = operaLogic(a, expr[i + 1]);
+	//		q.push(result);
+	//	}
+	//	break;
+	//	case 8:
+	//	{
+	//		double a = q.top();
+	//		q.pop();
+	//		double b = q.top();
+	//		q.pop();
+	//		result = operaComp(b, a, expr[i + 1]);
+	//		q.push(result);
+	//	}
+	//	break;
+	//	case 9:
+	//	{
+	//		double a = q.top();
+	//		q.pop();
+	//		double b = q.top();
+	//		q.pop();
+	//		double c = q.top();
+	//		q.pop();
+	//		result = operaIfElse(a, b, c);
+	//		q.push(result);
+	//	}
+	//	}
+	//	if (isnan(result) || isinf(result)) {
+	//		return INFINITY;
+	//	}
+	//}
+
+	//double resultado = q.top();
+	double resultado = 0.0;
+	return resultado;
+}
+
+__device__ double treeResult(double* var,Device_Tree* t) {
+	double result = 0;
+	double* a = new double[t->expCounter];
+	for (int i = 0; i < t->expCounter; i += 2) {
+		a[i] = t->exp[i];
+		a[i + 1] = t->exp[i + 1];
+		if (a[i] == 3.0) {
+			a[i] = 0.0;
+			a[i + 1] = var[(int)a[i + 1]];
+		}
+		if (a[i] == 5.0) {
+			a[i] = 0.0;
+		}
+	}
+
+	result = avalia(a, t->expCounter);
+	delete[] a;
+	return result;
+
+}
+
 __global__ void teste(Database* d_dados, Configures* d_conf,Subject** d_pop) {
-	d_dados->countVar = 20;
+	int sub = blockIdx.x;
+	int inst = d_dados->training[blockIdx.y];
+	double resultado = d_dados->results[inst];
+	double achado = treeResult(d_dados->values[inst],d_pop[sub]->d_tree);
+	
 }
 
 void Search::GPUcalcFitnessLS(int ini,int fim) {
@@ -22,17 +168,18 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 	aux = new Subject*[tam];
 	//carregando na GPU
 	for (int i = 0; i < tam; i++) {
-		//pop[i + ini]->iniDeviceTree();
+		pop[i + ini]->iniDeviceTree();
 		cudaMalloc(&aux[i], sizeof(Subject));
 		cudaMemcpy(aux[i],pop[i+ini],sizeof(Subject),cudaMemcpyHostToDevice);
 	}
 
 	cudaMalloc(&d_pop, sizeof(Subject*)*tam);
 	cudaMemcpy(d_pop, aux, sizeof(Subject*)*tam, cudaMemcpyHostToDevice);
-
+	dim3 block(h_conf->popSize,banco_dados->trainCount);
 	
 	//executando
-	teste<<<1, 1>>>(this->d_banco_dados, this->d_conf,d_pop);
+	teste<<<block, 1>>>(this->d_banco_dados, this->d_conf,d_pop);
+
 	//descaregando da GPU
 	for (int i = 0; i < tam; i++) {
 		//pop[i + ini]->destDeviceTree();
