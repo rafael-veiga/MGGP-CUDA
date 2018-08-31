@@ -12,123 +12,142 @@
 
 using namespace std;
 
-//class No {
-//public:
-//	double valor;
-//	No* next;
-//	__host__ __device__ No() {
-//		int a = 0;
-//	}
-//};
+class D_No {
+public:
+	double valor;
+	D_No* next;
+	__device__ D_No() {
+		valor = 0.0;
+		next = NULL;
+	}
+};
 
-//class Pilha {
-//public:
-//	No* atual;
-//
-//__device__	Pilha() {
-//
-//	}
-//__device__	void push(double v) {
-//		if (atual == NULL) {
-//			cudaMalloc(&atual, sizeof(No));
-//			atual->valor = v;
-//			atual->next = NULL;
-//		}
-//		else {
-//			No* aux;
-//			cudaMalloc(&aux, sizeof(No));
-//			aux->valor = v;
-//			aux->next = atual;
-//			atual = aux;
-//		}
-//}
-//__device__	double pop() {
-//		No* aux = atual;
-//		double res = atual->valor;
-//		atual = atual->next;
-//		cudaFree(aux);
-//		return res;
-//	}
-//};
+class Pilha {
+public:
+	D_No* atual;
 
-__device__ double avalia(double* a, int expCounter) {
+__device__	Pilha() {
+	atual = NULL;
+	}
 
-	//Pilha q;
-	//int aux;
+ __device__ ~Pilha() {
+	if (atual == NULL) {
+		return;
+	}
+	D_No* aux = atual->next;
+	while (aux != NULL) {
+		puxar();
+		aux = atual->next;
+	}
+
+}
+__device__	void push(double v) {
+		if (atual == NULL) {
+			//cudaMalloc(&atual, sizeof(D_No));
+			atual = new D_No();
+			atual->valor = v;
+		}
+		else {
+			D_No* aux;
+			//cudaMalloc(&aux, sizeof(D_No));
+			aux = new D_No();
+			aux->valor = v;
+			aux->next = atual;
+			atual = aux;
+		}
+}
+__device__	void puxar() {
+		D_No* aux = atual;
+		//double res = atual->valor;
+		atual = atual->next;
+		//cudaFree(aux);
+		delete aux;
+		//return res;
+	}
+__device__ double top() {
+	return atual->valor;
+}
+
+};
+
+__device__ double avalia(double* a, int expCounter, double* expr) {
+
+	Pilha q;
+	int aux;
 	//int countAlpha = 0;
-	//for (int i = 0; i < tam; i += 2) {
-	//	double result = 0.0;
-	//	switch ((int)expr[i]) {
-	//	case 0:
-	//	{
-	//		q.push(expr[i + 1]);
-	//	}
-	//	break;
-	//	case 1:// + - * / pow !
-	//	{
-	//		double b = q.top();
-	//		q.pop();
-	//		double d = q.top();
-	//		q.pop();
+	for (int i = 0; i < expCounter; i += 2) {
+		double result = 0.0;
+		switch ((int)expr[i]) {
+		case 0:
+		{
+			q.push(expr[i + 1]);
+		}
+		break;
+		case 1:// + - * / pow !
+		{
+			double b = q.top();
+			q.puxar();
+			double d = q.top();
+			q.puxar();
 	//		result = opera(d, b, expr[i + 1]);
-	//		q.push(result);
-	//	}
-	//	break;
-	//	case 2:// log exp sqrt
-	//	{
-	//		double n = q.top();
-	//		q.pop();
+			q.push(result);
+		}
+		break;
+		case 2:// log exp sqrt
+		{
+			double n = q.top();
+			q.puxar();
 	//		result = opera(n, expr[i + 1]);
-	//		q.push(result);
-	//	}
-	//	break;
-	//	case 6:// && || xor
-	//	{
-	//		double a = q.top();
-	//		q.pop();
-	//		double b = q.top();
-	//		q.pop();
+			q.push(result);
+		}
+		break;
+		case 6:// && || xor
+		{
+			double a = q.top();
+			q.puxar();
+			double b = q.top();
+			q.puxar();
 	//		result = operaLogic(b, a, expr[i + 1]);
-	//		q.push(result);
-	//	}
-	//	break;
-	//	case 7:
-	//	{
-	//		double a = q.top();
-	//		q.pop();
+			q.push(result);
+		}
+		break;
+		case 7:
+		{
+			double a = q.top();
+			q.puxar();
 	//		result = operaLogic(a, expr[i + 1]);
-	//		q.push(result);
-	//	}
-	//	break;
-	//	case 8:
-	//	{
-	//		double a = q.top();
-	//		q.pop();
-	//		double b = q.top();
-	//		q.pop();
+			q.push(result);
+		}
+		break;
+		case 8:
+		{
+			double a = q.top();
+			q.puxar();
+			double b = q.top();
+			q.puxar();
 	//		result = operaComp(b, a, expr[i + 1]);
-	//		q.push(result);
-	//	}
-	//	break;
-	//	case 9:
-	//	{
-	//		double a = q.top();
-	//		q.pop();
-	//		double b = q.top();
-	//		q.pop();
-	//		double c = q.top();
-	//		q.pop();
+			q.push(result);
+		}
+		break;
+		case 9:
+		{
+			double a = q.top();
+			q.puxar();
+			double b = q.top();
+			q.puxar();
+			double c = q.top();
+			q.puxar();
 	//		result = operaIfElse(a, b, c);
-	//		q.push(result);
-	//	}
-	//	}
+			q.push(result);
+		}
+		}
 	//	if (isnan(result) || isinf(result)) {
 	//		return INFINITY;
 	//	}
-	//}
+	}
 
-	//double resultado = q.top();
-	double resultado = 0.0;
+	double resultado = q.top();
+	//double resultado = 0.0;
 	return resultado;
 }
 
@@ -147,17 +166,20 @@ __device__ double treeResult(double* var,Device_Tree* t) {
 		}
 	}
 
-	result = avalia(a, t->expCounter);
+	result = avalia(a, t->expCounter, t->exp);
 	delete[] a;
 	return result;
+	//return var[0];
 
 }
 
-__global__ void teste(Database* d_dados, Configures* d_conf,Subject** d_pop) {
+__global__ void teste(Database* d_dados, Configures* d_conf,Subject** d_pop, double* res) {
 	int sub = blockIdx.x;
+	int tam = blockIdx.y + blockIdx.x * gridDim.y;
 	int inst = d_dados->training[blockIdx.y];
 	double resultado = d_dados->results[inst];
 	double achado = treeResult(d_dados->values[inst],d_pop[sub]->d_tree);
+	res[tam] = achado;
 	
 }
 
@@ -166,6 +188,8 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 	Subject** aux;
 	int tam = fim - ini;
 	aux = new Subject*[tam];
+
+	//cudaSetDevice(0);
 	//carregando na GPU
 	for (int i = 0; i < tam; i++) {
 		pop[i + ini]->iniDeviceTree();
@@ -176,16 +200,21 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 	cudaMalloc(&d_pop, sizeof(Subject*)*tam);
 	cudaMemcpy(d_pop, aux, sizeof(Subject*)*tam, cudaMemcpyHostToDevice);
 	dim3 block(h_conf->popSize,banco_dados->trainCount);
-	
+	double* d_res;
+	size_t tamanho = sizeof(double)*h_conf->popSize* banco_dados->trainCount;
+	cudaMalloc(&d_res, tamanho);
 	//executando
-	teste<<<block, 1>>>(this->d_banco_dados, this->d_conf,d_pop);
-
+	teste<<<block, 1>>>(this->d_banco_dados, this->d_conf,d_pop, d_res);
+	double* res =(double*) malloc(tamanho);
+	cudaMemcpy(res, d_res, tamanho, cudaMemcpyDeviceToHost);
 	//descaregando da GPU
 	for (int i = 0; i < tam; i++) {
-		//pop[i + ini]->destDeviceTree();
+		pop[i + ini]->destDeviceTree();
 		cudaFree(&d_pop[i]);
 	}
 	cudaFree(d_pop);
+	cudaFree(d_res);
+	free(res);
 	delete aux;
 }
 

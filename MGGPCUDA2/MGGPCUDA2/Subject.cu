@@ -17,11 +17,10 @@ Subject::Subject() {
 
 void Subject::iniDeviceTree() {
 	Device_Tree host;
-	size_t tam = sizeof(double);
+	size_t tam = sizeof(double)*host.expCounter;
 	host.expCounter = this->tree->expCounter;
-	cudaMalloc(&host.exp, sizeof(double)*host.expCounter);
-	this->d_tree_exp = host.exp;
-	
+	cudaMalloc(&host.exp, tam);
+	cudaMemcpy(host.exp, this->tree->exp, tam, cudaMemcpyHostToDevice);
 	tam = sizeof(Device_Tree);
 	cudaMalloc(&this->d_tree, tam);
 	cudaMemcpy(this->d_tree, &host, tam, cudaMemcpyHostToDevice);
