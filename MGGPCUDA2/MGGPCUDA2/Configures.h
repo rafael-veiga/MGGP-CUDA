@@ -23,11 +23,11 @@ public:
 
 	int complexity = 0; //0=high 1=terminals
 
-	__host__ __device__  Configures();
+	Configures();
 
 };
 
 extern Configures* h_conf;
-extern Configures* d_conf;
+
 
 #endif // CONFIGURES_INCLUDED

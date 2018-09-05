@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{144996BC-918F-49F5-85D7-E5C912D56716}</ProjectGuid>
     <RootNamespace>MGGPCUDA2</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -80,6 +80,7 @@
   <ItemGroup>
     <CudaCompile Include="Configures.cu" />
     <CudaCompile Include="Database.cu" />
+    <CudaCompile Include="Device_Subject.cu" />
     <CudaCompile Include="Gramatica.cu" />
     <CudaCompile Include="main.cu" />
     <CudaCompile Include="No.cu" />
@@ -94,7 +95,7 @@
   <ItemGroup>
     <ClInclude Include="Configures.h" />
     <ClInclude Include="Database.h" />
-    <ClInclude Include="Device_Tree.h" />
+    <ClInclude Include="Device_Subject.h" />
     <ClInclude Include="Gramatica.h" />
     <ClInclude Include="No.h" />
     <ClInclude Include="Operators.h" />
@@ -104,9 +105,6 @@
     <ClInclude Include="Search.h" />
     <ClInclude Include="Subject.h" />
     <ClInclude Include="Tree.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Device_Tree.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

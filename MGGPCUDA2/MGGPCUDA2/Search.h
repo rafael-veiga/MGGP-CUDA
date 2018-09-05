@@ -14,7 +14,7 @@
 #include "device_launch_parameters.h"
 
 extern Configures* h_conf;
-extern Configures* d_conf;
+
 class Search {
 public:
 	Database* banco_dados;

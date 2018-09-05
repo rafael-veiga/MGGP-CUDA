@@ -12,26 +12,14 @@ Subject::Subject() {
 	//    fitnessTest = new double[objectives];
 	fitnessLS = INFINITY;
 	fitnessTestLS = INFINITY;
+	treino_vp = 0;
+	treino_fp = 0;
+	treino_fn = 0;
+	treino_vn = 0;
 	printing = true;
 };
 
-void Subject::iniDeviceTree() {
-	Device_Tree host;
-	size_t tam = sizeof(double)*host.expCounter;
-	host.expCounter = this->tree->expCounter;
-	cudaMalloc(&host.exp, tam);
-	cudaMemcpy(host.exp, this->tree->exp, tam, cudaMemcpyHostToDevice);
-	tam = sizeof(Device_Tree);
-	cudaMalloc(&this->d_tree, tam);
-	cudaMemcpy(this->d_tree, &host, tam, cudaMemcpyHostToDevice);
 
-
-}
-
-void Subject::destDeviceTree() {
-	cudaFree(this->d_tree_exp);
-	cudaFree(this->d_tree);
-}
 
 Subject::Subject(Tree* n) {
 	tree = n;

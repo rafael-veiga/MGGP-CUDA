@@ -8,9 +8,21 @@
 #include "Gramatica.h"
 #include "Configures.h"
 #include "Parser.h"
-#include "Device_Tree.h"
+#include "Device_Subject.h"
 
 using namespace std;
+
+class Res {
+public:
+	int vp;
+	int fp;
+	int fn;
+	int vn;
+	double erro;
+	__host__ __device__ Res(){
+		
+	}
+};
 
 class D_No {
 public:
@@ -34,12 +46,11 @@ __device__	Pilha() {
 	if (atual == NULL) {
 		return;
 	}
-	D_No* aux = atual->next;
-	while (aux != NULL) {
+	
+	while (atual->next != NULL) {
 		puxar();
-		aux = atual->next;
 	}
-
+	puxar();
 }
 __device__	void push(double v) {
 		if (atual == NULL) {
@@ -57,6 +68,7 @@ __device__	void push(double v) {
 		}
 }
 __device__	void puxar() {
+	if (atual != NULL) {
 		D_No* aux = atual;
 		//double res = atual->valor;
 		atual = atual->next;
@@ -64,14 +76,91 @@ __device__	void puxar() {
 		delete aux;
 		//return res;
 	}
+	}
 __device__ double top() {
+	if (atual == NULL) {
+		return 0.0;
+	}
 	return atual->valor;
 }
 
 };
 
-__device__ double avalia(double* a, int expCounter, double* expr) {
+__device__ double d_opera(double a, int x) {
+	if (x == 0) //log
+				//        return a >= 0 ? log(a) : INFINITY;
+		return log(a);
+	else if (x == 1) //exp
+		return exp(a);
+	else if (x == 2)//sqrt
+					//        return a > 0 ? sqrt(a) : INFINITY;
+		return sqrt(a);
+}
 
+__device__ double d_opera(double a, double b, int x) {
+	if (x == 0)
+		return a + b;
+	else if (x == 1)
+		return a - b;
+	else if (x == 2)
+		return a * b;
+	else if (x == 3) {
+		//        return b == 0 ? a/b : INFINITY;
+		return a / b;
+	}
+	else if (x == 4)
+		return pow(a, b);
+	//        return a > 0 ? pow(a, b) : INFINITY;
+	else if (x == 5)
+		return a + b;
+}
+
+__device__ double d_operaLogic(double a, double b, int x) {
+	if (x == 0)
+		return a && b;
+	else if (x == 1)
+		return a || b;
+	else if (x == 2)
+		return (bool)a ^ (bool)b;
+}
+//7
+__device__ double d_operaLogic(double a, int x) {
+	if (x == 0)
+		return !(bool)a;
+	else if (x == 1)
+		return 1;
+	else if (x == 2)
+		return 0;
+}
+//8
+__device__ double d_operaComp(double a, double b, int x) {
+	if (x == 0)
+		return a < b;
+	else if (x == 1)
+		return a <= b;
+	else if (x == 2)
+		return a == b;
+	else if (x == 3)
+		return a >= b;
+	else if (x == 4)
+		return a > b;
+	else if (x == 5)
+		return a != b;
+}
+//9
+__device__ double d_operaIfElse(double a, double b, int c) {
+	if (a == 0) {
+		return b;
+	}
+	else {
+		return c;
+	}
+}
+
+
+__device__ double avalia(double* expr, int expCounter) {
+	
+	
 	Pilha q;
 	int aux;
 	//int countAlpha = 0;
@@ -89,7 +178,7 @@ __device__ double avalia(double* a, int expCounter, double* expr) {
 			q.puxar();
 			double d = q.top();
 			q.puxar();
-	//		result = opera(d, b, expr[i + 1]);
+			result = d_opera(d, b, expr[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -97,7 +186,7 @@ __device__ double avalia(double* a, int expCounter, double* expr) {
 		{
 			double n = q.top();
 			q.puxar();
-	//		result = opera(n, expr[i + 1]);
+			result = d_opera(n, expr[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -107,7 +196,7 @@ __device__ double avalia(double* a, int expCounter, double* expr) {
 			q.puxar();
 			double b = q.top();
 			q.puxar();
-	//		result = operaLogic(b, a, expr[i + 1]);
+			result = d_operaLogic(b, a, expr[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -115,7 +204,7 @@ __device__ double avalia(double* a, int expCounter, double* expr) {
 		{
 			double a = q.top();
 			q.puxar();
-	//		result = operaLogic(a, expr[i + 1]);
+			result = d_operaLogic(a, expr[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -125,7 +214,7 @@ __device__ double avalia(double* a, int expCounter, double* expr) {
 			q.puxar();
 			double b = q.top();
 			q.puxar();
-	//		result = operaComp(b, a, expr[i + 1]);
+			result = d_operaComp(b, a, expr[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -137,26 +226,26 @@ __device__ double avalia(double* a, int expCounter, double* expr) {
 			q.puxar();
 			double c = q.top();
 			q.puxar();
-	//		result = operaIfElse(a, b, c);
+			result = d_operaIfElse(a, b, c);
 			q.push(result);
 		}
 		}
-	//	if (isnan(result) || isinf(result)) {
-	//		return INFINITY;
-	//	}
+		if (isnan(result) || isinf(result)) {
+			return INFINITY;
+		}
 	}
 
 	double resultado = q.top();
-	//double resultado = 0.0;
+	// resultado = 0.0;
 	return resultado;
 }
 
-__device__ double treeResult(double* var,Device_Tree* t) {
+__device__ double treeResult(double* var,double* exp,int expCounter) {
 	double result = 0;
-	double* a = new double[t->expCounter];
-	for (int i = 0; i < t->expCounter; i += 2) {
-		a[i] = t->exp[i];
-		a[i + 1] = t->exp[i + 1];
+	double* a = new double[expCounter];
+	for (int i = 0; i < expCounter; i += 2) {
+		a[i] = exp[i];
+		a[i + 1] = exp[i + 1];
 		if (a[i] == 3.0) {
 			a[i] = 0.0;
 			a[i + 1] = var[(int)a[i + 1]];
@@ -166,56 +255,127 @@ __device__ double treeResult(double* var,Device_Tree* t) {
 		}
 	}
 
-	result = avalia(a, t->expCounter, t->exp);
+	result = avalia(a, expCounter);
 	delete[] a;
 	return result;
 	//return var[0];
 
 }
 
-__global__ void teste(Database* d_dados, Configures* d_conf,Subject** d_pop, double* res) {
-	int sub = blockIdx.x;
-	int tam = blockIdx.y + blockIdx.x * gridDim.y;
-	int inst = d_dados->training[blockIdx.y];
-	double resultado = d_dados->results[inst];
-	double achado = treeResult(d_dados->values[inst],d_pop[sub]->d_tree);
-	res[tam] = achado;
+__global__ void teste(Database* d_dados, Device_Subject** d_pop,double* d_res) {
+	if (blockIdx.x < gridDim.x && blockIdx.x < gridDim.y) {
+		int sub = blockIdx.x;
+		int inst = d_dados->training[blockIdx.y];
+
+		double achado = treeResult(d_dados->values[inst], d_pop[sub]->d_tree_exp,d_pop[sub]->d_tree_countExp);
+		d_res[blockIdx.y+blockIdx.x*gridDim.y] = achado;
+	}
+}
+
+__global__ void teste2(Database* d_dados, Device_Subject** d_pop, Res* erro,double* d_res) {
+	erro[blockIdx.x].vp = 0;
+	erro[blockIdx.x].fp = 0;
+	erro[blockIdx.x].fn = 0;
+	erro[blockIdx.x].vn = 0;
+	for (int i = 0; i < d_dados->trainCount; i++) {
+		double real = d_dados->results[d_dados->training[i]];
+		double achado = d_res[i + blockIdx.x*d_dados->trainCount];
+		if (achado != real) {
+			if (real == 0.0) {
+				erro[blockIdx.x].fp++;
+			}
+			else {
+				erro[blockIdx.x].fn++;
+			}
+
+		}
+		else {
+			if (real == 0.0) {
+				erro[blockIdx.x].vn++;
+
+			}
+			else {
+				erro[blockIdx.x].vp++;
+			}
+		}
+
+	}
+	erro[blockIdx.x].erro = ((double)(erro[blockIdx.x].fn + erro[blockIdx.x].fp) / d_dados->trainCount) * 100;
 	
 }
 
 void Search::GPUcalcFitnessLS(int ini,int fim) {
-	Subject** d_pop;
-	Subject** aux;
+	Device_Subject** d_pop;
+	Device_Subject** aux;
+	
+	int tamTreino = this->banco_dados->trainCount;
+	int tamPop = h_conf->popSize;
 	int tam = fim - ini;
-	aux = new Subject*[tam];
+	int tam2 = sizeof(Res) * tamPop;
+	aux = new Device_Subject*[tam];
 
-	//cudaSetDevice(0);
+	cudaSetDevice(0);
 	//carregando na GPU
-	for (int i = 0; i < tam; i++) {
-		pop[i + ini]->iniDeviceTree();
-		cudaMalloc(&aux[i], sizeof(Subject));
-		cudaMemcpy(aux[i],pop[i+ini],sizeof(Subject),cudaMemcpyHostToDevice);
+	for(int i = 0; i < tam; i++) {
+		Device_Subject* sub = new Device_Subject();
+		sub->iniDeviceTree(pop[i + ini]);
+		
+		cudaMalloc(&aux[i], sizeof(Device_Subject));
+		cudaMemcpy(aux[i],sub,sizeof(Device_Subject),cudaMemcpyHostToDevice);
+		
 	}
 
-	cudaMalloc(&d_pop, sizeof(Subject*)*tam);
-	cudaMemcpy(d_pop, aux, sizeof(Subject*)*tam, cudaMemcpyHostToDevice);
-	dim3 block(h_conf->popSize,banco_dados->trainCount);
-	double* d_res;
-	size_t tamanho = sizeof(double)*h_conf->popSize* banco_dados->trainCount;
-	cudaMalloc(&d_res, tamanho);
+	cudaMalloc(&d_pop, sizeof(Device_Subject*)*tam);
+	cudaMemcpy(d_pop, aux, sizeof(Device_Subject*)*tam, cudaMemcpyHostToDevice);
+	
+	
+	
 	//executando
-	teste<<<block, 1>>>(this->d_banco_dados, this->d_conf,d_pop, d_res);
-	double* res =(double*) malloc(tamanho);
-	cudaMemcpy(res, d_res, tamanho, cudaMemcpyDeviceToHost);
-	//descaregando da GPU
-	for (int i = 0; i < tam; i++) {
-		pop[i + ini]->destDeviceTree();
-		cudaFree(&d_pop[i]);
+	
+	dim3 block(tamPop, tamTreino);
+	double* d_res;
+	cudaMalloc(&d_res, sizeof(double)*tamPop*tamTreino);
+	teste<<<block, 1>>>(this->d_banco_dados, d_pop,d_res);
+	
+	
+	Res* erro = new Res[tamPop];
+	Res* d_erro;
+	cudaMalloc(&d_erro,tam2);
+	cudaDeviceSynchronize();
+	//teste
+	double* re = new double[tamPop*tamTreino];
+	cudaMemcpy(re, d_res, sizeof(double)*tamPop*tamTreino, cudaMemcpyDeviceToHost);
+	for (int i = 0; i < tamPop*tamTreino; i++) {
+		cout << re[i] << ",";
 	}
-	cudaFree(d_pop);
+	cout << endl;
+	delete[] re;
+	//fim teste
+	teste2<<<tamPop, 1>>>(this->d_banco_dados, d_pop, d_erro,d_res);
+	cudaMemcpy(erro, d_erro, tam2,cudaMemcpyDeviceToHost);
+	
+	for (int i = 0; i < tam; i++) {
+		Subject* atual = pop[i + ini];
+		atual->fitnessLS = erro[i].erro;
+		atual->treino_vp = erro[i].vp;
+		atual->treino_fp = erro[i].fp;
+		atual->treino_fn = erro[i].fn;
+		atual->treino_vn = erro[i].vn;
+		atual->complexity();
+	}
+//descaregando da GPU
+
+	for (int i = 0; i < h_conf->popSize; i++) {
+		Device_Subject novo;
+		cudaMemcpy(&novo, aux[i], sizeof(Device_Subject), cudaMemcpyDeviceToHost);
+		novo.destDeviceTree();
+		cudaFree(aux[i]);
+	}
 	cudaFree(d_res);
-	free(res);
-	delete aux;
+	cudaFree(d_pop);
+	cudaFree(d_erro);
+	delete[] erro;
+	delete[] aux;
 }
 
 bool mySort(Subject* a, Subject* b) {
@@ -274,8 +434,7 @@ Search::Search(Database* banco_dados, Database* d_banco) {
 	errors = 0;
 	this->banco_dados = banco_dados;
 	this->d_banco_dados = d_banco;
-	cudaMalloc(&this->d_conf, sizeof(Configures));
-	cudaMemcpy(this->d_conf, h_conf, sizeof(Configures), cudaMemcpyHostToDevice);
+	
 	aux = new int[h_conf->popSize];
 	for (int i = 0; i < h_conf->popSize; i++)
 		aux[i] = 0;
@@ -517,13 +676,13 @@ void Search::Operate() {
 	//calcFitnessLS 
 	//paralelizar
 
-	//GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2);
-	GPUcalcFitnessLS(0,h_conf->popSize);
+	GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2);
+	
 
-	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
+/*	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
 		calcFitnessLS(pop[i]);
 	}
-
+*/
 	
 };
 
