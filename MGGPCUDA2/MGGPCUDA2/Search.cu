@@ -10,19 +10,9 @@
 #include "Parser.h"
 #include "Device_Subject.h"
 
+
 using namespace std;
 
-class Res {
-public:
-	int vp;
-	int fp;
-	int fn;
-	int vn;
-	double erro;
-	__host__ __device__ Res(){
-		
-	}
-};
 
 class D_No {
 public:
@@ -262,58 +252,52 @@ __device__ double treeResult(double* var,double* exp,int expCounter) {
 
 }
 
-__global__ void teste(Database* d_dados, Device_Subject** d_pop,double* d_res) {
-	if (blockIdx.x < gridDim.x && blockIdx.x < gridDim.y) {
-		int sub = blockIdx.x;
-		int inst = d_dados->training[blockIdx.y];
 
-		double achado = treeResult(d_dados->values[inst], d_pop[sub]->d_tree_exp,d_pop[sub]->d_tree_countExp);
-		d_res[blockIdx.y+blockIdx.x*gridDim.y] = achado;
-	}
-}
 
-__global__ void teste2(Database* d_dados, Device_Subject** d_pop, Res* erro,double* d_res) {
-	erro[blockIdx.x].vp = 0;
-	erro[blockIdx.x].fp = 0;
-	erro[blockIdx.x].fn = 0;
-	erro[blockIdx.x].vn = 0;
-	for (int i = 0; i < d_dados->trainCount; i++) {
-		double real = d_dados->results[d_dados->training[i]];
-		double achado = d_res[i + blockIdx.x*d_dados->trainCount];
-		if (achado != real) {
-			if (real == 0.0) {
-				erro[blockIdx.x].fp++;
-			}
-			else {
-				erro[blockIdx.x].fn++;
-			}
-
-		}
-		else {
-			if (real == 0.0) {
-				erro[blockIdx.x].vn++;
+__global__ void kernelObj(Database* d_dados, Device_Subject** d_pop) {
+	if (blockIdx.x < gridDim.x) {
+		Device_Subject* d_ind = d_pop[blockIdx.x];
+		d_ind->vp = d_ind->fp = d_ind->fn = d_ind->vn = 0;
+		for (int i = 0; i < d_dados->trainCount; i++) {
+			int id = d_dados->training[i];
+			double yReal = d_dados->results[id];
+			double yPredict = treeResult(d_dados->values[id], d_ind->d_tree_exp, d_ind->d_tree_countExp);
+			if (yPredict != yReal) {
+				if (yReal == 0.0) {
+					d_ind->fp++;
+				}
+				else {
+					d_ind->fn++;
+				}
 
 			}
 			else {
-				erro[blockIdx.x].vp++;
+				if (yReal == 0.0) {
+					d_ind->vn++;
+
+				}
+				else {
+					d_ind->vp++;
+				}
 			}
+			
 		}
+	d_ind->erro = ((double)(d_ind->fn + d_ind->fp) / d_dados->trainCount) * 100;
 
 	}
-	erro[blockIdx.x].erro = ((double)(erro[blockIdx.x].fn + erro[blockIdx.x].fp) / d_dados->trainCount) * 100;
-	
+
 }
+
 
 void Search::GPUcalcFitnessLS(int ini,int fim) {
 	Device_Subject** d_pop;
 	Device_Subject** aux;
-	
+	size_t tam2;
 	int tamTreino = this->banco_dados->trainCount;
 	int tamPop = h_conf->popSize;
 	int tam = fim - ini;
-	int tam2 = sizeof(Res) * tamPop;
 	aux = new Device_Subject*[tam];
-
+	tam2 = sizeof(Device_Subject*)*tam;
 	cudaSetDevice(0);
 	//carregando na GPU
 	for(int i = 0; i < tam; i++) {
@@ -325,56 +309,38 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 		
 	}
 
-	cudaMalloc(&d_pop, sizeof(Device_Subject*)*tam);
-	cudaMemcpy(d_pop, aux, sizeof(Device_Subject*)*tam, cudaMemcpyHostToDevice);
+	cudaMalloc(&d_pop, tam2);
+	cudaMemcpy(d_pop, aux, tam2, cudaMemcpyHostToDevice);
 	
 	
 	
 	//executando
 	
-	dim3 block(tamPop, tamTreino);
-	double* d_res;
-	cudaMalloc(&d_res, sizeof(double)*tamPop*tamTreino);
-	teste<<<block, 1>>>(this->d_banco_dados, d_pop,d_res);
+	//dim3 block(tamPop, tamTreino);
+	dim3 block(tamPop);
 	
-	
-	Res* erro = new Res[tamPop];
-	Res* d_erro;
-	cudaMalloc(&d_erro,tam2);
-	cudaDeviceSynchronize();
-	//teste
-	double* re = new double[tamPop*tamTreino];
-	cudaMemcpy(re, d_res, sizeof(double)*tamPop*tamTreino, cudaMemcpyDeviceToHost);
-	for (int i = 0; i < tamPop*tamTreino; i++) {
-		cout << re[i] << ",";
-	}
-	cout << endl;
-	delete[] re;
-	//fim teste
-	teste2<<<tamPop, 1>>>(this->d_banco_dados, d_pop, d_erro,d_res);
-	cudaMemcpy(erro, d_erro, tam2,cudaMemcpyDeviceToHost);
+	kernelObj<<<block, 1>>>(this->d_banco_dados, d_pop);
+	Device_Subject** tst = new Device_Subject*[tam];
+	cudaMemcpy(tst, d_pop, tam2, cudaMemcpyDeviceToHost);
+	cudaError erro = cudaGetLastError();
 	
 	for (int i = 0; i < tam; i++) {
+		Device_Subject novo;
 		Subject* atual = pop[i + ini];
-		atual->fitnessLS = erro[i].erro;
-		atual->treino_vp = erro[i].vp;
-		atual->treino_fp = erro[i].fp;
-		atual->treino_fn = erro[i].fn;
-		atual->treino_vn = erro[i].vn;
+		cudaMemcpy(&novo, aux[i], sizeof(Device_Subject), cudaMemcpyDeviceToHost);
+		atual->fitnessLS = novo.erro;
+		atual->treino_vp = novo.vp;
+		atual->treino_fp = novo.fp;
+		atual->treino_fn = novo.fn;
+		atual->treino_vn = novo.vn;
+		novo.destDeviceTree();
+		cudaFree(aux[i]);
 		atual->complexity();
 	}
 //descaregando da GPU
-
-	for (int i = 0; i < h_conf->popSize; i++) {
-		Device_Subject novo;
-		cudaMemcpy(&novo, aux[i], sizeof(Device_Subject), cudaMemcpyDeviceToHost);
-		novo.destDeviceTree();
-		cudaFree(aux[i]);
-	}
-	cudaFree(d_res);
+	
 	cudaFree(d_pop);
-	cudaFree(d_erro);
-	delete[] erro;
+	
 	delete[] aux;
 }
 
@@ -679,10 +645,10 @@ void Search::Operate() {
 	GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2);
 	
 
-/*	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
+	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
 		calcFitnessLS(pop[i]);
 	}
-*/
+	
 	
 };
 

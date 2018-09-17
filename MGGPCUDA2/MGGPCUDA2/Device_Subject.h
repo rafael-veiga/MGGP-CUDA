@@ -7,6 +7,11 @@ class Device_Subject
 {
 public:
 	double* d_tree_exp;
+	int vp;
+	int fp;
+	int fn;
+	int vn;
+	double erro;
 	int d_tree_countExp;
 	
 	void iniDeviceTree(Subject* sub);
