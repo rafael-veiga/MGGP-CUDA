@@ -45,13 +45,13 @@ public:
 
 	Search(Database* banco_dados, Database* d_banco);
 	~Search();
-	void GPUcalcFitnessLS(int ini, int fim);
+	void GPUcalcFitnessLS(int ini, int fim, double* d_res);
 	void doMonoSearch();
 	void doMultiSearch();
 	int tournamentMono(int a, int b);
 	int tournamentMulti(int a, int b);
-	void Operate();
-	void updateParetoAux(Subject* a);
+	void Operate(double* d_res);
+	//void updateParetoAux(Subject* a);
 	void calcRank(int size);
 	void calcRankTest(int size);
 	void calcRankValid(int size);
@@ -64,9 +64,9 @@ public:
 	bool dominate(Subject* a, Subject* b);
 	bool dominateTest(Subject* a, Subject* b);
 	bool dominateValid(Subject* a, Subject* b);
-	void calcFitness(Subject* s);
+	//void calcFitness(Subject* s);
 	void calcFitnessLS(Subject* s);
-	void calcFitnessTest(Subject* s);
+	//void calcFitnessTest(Subject* s);
 	void calcFitnessTestLS(Subject* s);
 	void calcFitnessValidLS(Subject* s);
 	bool static sortFit(Subject* a, Subject* b);

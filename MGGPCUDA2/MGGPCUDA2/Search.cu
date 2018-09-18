@@ -273,43 +273,15 @@ __device__ double treeResult(double* var,double* exp,int expCounter) {
 //}
 
 
-__global__ void kernelObj2(Database* d_dados, Device_Subject** d_pop) {
+__global__ void kernelObj2(Database* d_dados, Device_Subject** d_pop, double* d_res) {
 	if (blockIdx.x < gridDim.x && blockIdx.y < gridDim.y) {
 		Device_Subject* d_ind = d_pop[blockIdx.x];
-
-		d_ind->vp = d_ind->fp = d_ind->fn = d_ind->vn = 0;
-		for (int i = 0; i < d_dados->trainCount; i++) {
-			int id = d_dados->training[i];
-			double yReal = d_dados->results[id];
-			double yPredict = treeResult(d_dados->values[id], d_ind->d_tree_exp, d_ind->d_tree_countExp);
-			if (yPredict != yReal) {
-				if (yReal == 0.0) {
-					d_ind->fp++;
-				}
-				else {
-					d_ind->fn++;
-				}
-
-			}
-			else {
-				if (yReal == 0.0) {
-					d_ind->vn++;
-
-				}
-				else {
-					d_ind->vp++;
-				}
-			}
-
-		}
-		d_ind->erro = ((double)(d_ind->fn + d_ind->fp) / d_dados->trainCount) * 100;
-
+		int id = d_dados->training[blockIdx.y];
+		 d_res[blockIdx.x] = treeResult(d_dados->values[id], d_ind->d_tree_exp, d_ind->d_tree_countExp);
 	}
 
 }
-
-
-void Search::GPUcalcFitnessLS(int ini,int fim) {
+void Search::GPUcalcFitnessLS(int ini, int fim, double* d_res) {
 	Device_Subject** d_pop;
 	Device_Subject** aux;
 	size_t tam2;
@@ -321,18 +293,18 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 	tam2 = sizeof(Device_Subject*)*tam;
 	cudaSetDevice(0);
 	//carregando na GPU
-	for(int i = 0; i < tam; i++) {
+	for (int i = 0; i < tam; i++) {
 		Device_Subject* sub = new Device_Subject();
 		sub->iniDeviceTree(pop[i + ini]);
-		
-	erro=	cudaMalloc(&aux[i], sizeof(Device_Subject));
-	if (erro) {
-		cout << "erro: " << cudaGetErrorString(erro) << endl;
-	}
-	erro=	cudaMemcpy(aux[i],sub,sizeof(Device_Subject),cudaMemcpyHostToDevice);
-	if (erro) {
-		cout << "erro: " << cudaGetErrorString(erro) << endl;
-	}
+
+		erro = cudaMalloc(&aux[i], sizeof(Device_Subject));
+		if (erro) {
+			cout << "erro: " << cudaGetErrorString(erro) << endl;
+		}
+		erro = cudaMemcpy(aux[i], sub, sizeof(Device_Subject), cudaMemcpyHostToDevice);
+		if (erro) {
+			cout << "erro: " << cudaGetErrorString(erro) << endl;
+		}
 	}
 
 	cudaMalloc(&d_pop, tam2);
@@ -343,18 +315,21 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 	if (erro) {
 		cout << "erro: " << cudaGetErrorString(erro) << endl;
 	}
-	
-	
+
+
 	//executando
-	
-	//dim3 block(tamPop, tamTreino);
-	dim3 block(tamPop);
-	
-	kernelObj<<<block, 1>>>(this->d_banco_dados, d_pop);
+
+	dim3 block(tamPop, tamTreino);
+	//dim3 block(tamPop);
+
+	kernelObj2<<<block, 1 >> >(this->d_banco_dados, d_pop,d_res);
 	erro = cudaGetLastError();
 	if (erro) {
 		cout << "erro: " << cudaGetErrorString(erro) << endl;
 	}
+
+	
+
 	for (int i = 0; i < tam; i++) {
 		Device_Subject novo;
 		Subject* atual = pop[i + ini];
@@ -362,21 +337,85 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 		if (erro) {
 			cout << "erro: " << cudaGetErrorString(erro) << endl;
 		}
-		atual->fitnessLS = novo.erro;
-		atual->treino_vp = novo.vp;
-		atual->treino_fp = novo.fp;
-		atual->treino_fn = novo.fn;
-		atual->treino_vn = novo.vn;
 		novo.destDeviceTree();
 		cudaFree(aux[i]);
-		
+
 	}
-//descaregando da GPU
-	
+	//descaregando da GPU
+
 	cudaFree(d_pop);
-	
+
 	delete[] aux;
 }
+
+//void Search::GPUcalcFitnessLS(int ini,int fim) {
+//	Device_Subject** d_pop;
+//	Device_Subject** aux;
+//	size_t tam2;
+//	cudaError erro;
+//	int tamTreino = this->banco_dados->trainCount;
+//	int tamPop = h_conf->popSize;
+//	int tam = fim - ini;
+//	aux = new Device_Subject*[tam];
+//	tam2 = sizeof(Device_Subject*)*tam;
+//	cudaSetDevice(0);
+//	//carregando na GPU
+//	for(int i = 0; i < tam; i++) {
+//		Device_Subject* sub = new Device_Subject();
+//		sub->iniDeviceTree(pop[i + ini]);
+//		
+//	erro=	cudaMalloc(&aux[i], sizeof(Device_Subject));
+//	if (erro) {
+//		cout << "erro: " << cudaGetErrorString(erro) << endl;
+//	}
+//	erro=	cudaMemcpy(aux[i],sub,sizeof(Device_Subject),cudaMemcpyHostToDevice);
+//	if (erro) {
+//		cout << "erro: " << cudaGetErrorString(erro) << endl;
+//	}
+//	}
+//
+//	cudaMalloc(&d_pop, tam2);
+//	if (erro) {
+//		cout << "erro: " << cudaGetErrorString(erro) << endl;
+//	}
+//	cudaMemcpy(d_pop, aux, tam2, cudaMemcpyHostToDevice);
+//	if (erro) {
+//		cout << "erro: " << cudaGetErrorString(erro) << endl;
+//	}
+//	
+//	
+//	//executando
+//	
+//	//dim3 block(tamPop, tamTreino);
+//	dim3 block(tamPop);
+//	
+//	kernelObj<<<block, 1>>>(this->d_banco_dados, d_pop);
+//	erro = cudaGetLastError();
+//	if (erro) {
+//		cout << "erro: " << cudaGetErrorString(erro) << endl;
+//	}
+//	for (int i = 0; i < tam; i++) {
+//		Device_Subject novo;
+//		Subject* atual = pop[i + ini];
+//		erro = cudaMemcpy(&novo, aux[i], sizeof(Device_Subject), cudaMemcpyDeviceToHost);
+//		if (erro) {
+//			cout << "erro: " << cudaGetErrorString(erro) << endl;
+//		}
+//		atual->fitnessLS = novo.erro;
+//		atual->treino_vp = novo.vp;
+//		atual->treino_fp = novo.fp;
+//		atual->treino_fn = novo.fn;
+//		atual->treino_vn = novo.vn;
+//		novo.destDeviceTree();
+//		cudaFree(aux[i]);
+//		
+//	}
+////descaregando da GPU
+//	
+//	cudaFree(d_pop);
+//	
+//	delete[] aux;
+//}
 
 bool mySort(Subject* a, Subject* b) {
 	//    return (a->fitness < b->fitness);
@@ -443,6 +482,11 @@ Search::Search(Database* banco_dados, Database* d_banco) {
 };
 
 void Search::doMonoSearch() {
+	double* d_res;
+
+	cudaError erro = cudaMalloc(&d_res, banco_dados->trainCount*h_conf->popSize * sizeof(double));
+	if (erro)
+		cout << "nao conseguio alocar d_res" << endl;
 	pop = new Subject*[h_conf->popSize * 2];
 	convergence = new double[h_conf->iterations];
 
@@ -458,7 +502,7 @@ void Search::doMonoSearch() {
 	int size = (h_conf->popSize * h_conf->elitism);
 
 	for (int it = 0; it < h_conf->iterations; it++) {
-		Operate();
+		Operate(d_res);
 		sort(pop, pop + h_conf->popSize, sortFit);
 		sort(pop + h_conf->popSize, pop + h_conf->popSize * 2, sortFit);
 
@@ -514,6 +558,11 @@ void Search::doMonoSearch() {
 };
 
 void Search::doMultiSearch() {
+	double* d_res;
+	
+	cudaError erro = cudaMalloc(&d_res, banco_dados->trainCount*h_conf->popSize * sizeof(double));
+	if (erro)
+		cout << "nao conseguio alocar d_res" << endl;
 	pop = new Subject*[h_conf->popSize * 2];
 	convergence = new double[h_conf->iterations];
 
@@ -529,8 +578,9 @@ void Search::doMultiSearch() {
 	//        calcRank(conf->popSize);
 
 	//    double old = 0;
+	
 	for (int it = 0; it < h_conf->iterations; it++) {
-		Operate();
+		Operate(d_res);
 		int size = h_conf->popSize * 2;
 		calcRank(size);
 		// apagar piores
@@ -647,7 +697,7 @@ int Search::tournamentMulti(int a, int b) {
 	}
 }
 
-void Search::Operate() {
+void Search::Operate(double* d_res) {
 	//instanciar
 	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i += 2) {
 		pop[i] = (new Subject());
@@ -676,7 +726,7 @@ void Search::Operate() {
 	//calcFitnessLS 
 	//paralelizar
 
-	GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2);
+	GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2,d_res);
 	
 	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
 	pop[i]->complexity();
