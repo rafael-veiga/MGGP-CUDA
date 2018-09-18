@@ -69,7 +69,6 @@ int main(int argc, char** args) {
 	//    data = new Database("read/base5.txt", "read/grupo5.txt");
 	Database *banco_dados = new Database(dados, grupo);
 	Database* d_banco_dados =banco_dados->copyDevice();
-	
 	//banco_dados->print();
 	//cout << "fim do database" << endl << "inicio do search" << endl;
 	//busca

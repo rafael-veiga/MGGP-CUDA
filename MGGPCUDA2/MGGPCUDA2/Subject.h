@@ -40,7 +40,7 @@ public:
 	__host__ __device__ Subject(Tree* n);
 	
 	double complexity();
-	~Subject();
+	__host__ __device__ ~Subject();
 	void print();
 	
 	

@@ -13,67 +13,38 @@
 
 using namespace std;
 
-
-class D_No {
-public:
-	double valor;
-	D_No* next;
-	__device__ D_No() {
-		valor = 0.0;
-		next = NULL;
-	}
-};
-
 class Pilha {
+private:
+	int size;
+	int pos;
+	double* valor;
 public:
-	D_No* atual;
-
-__device__	Pilha() {
-	atual = NULL;
+	__device__ Pilha(int size) {
+		valor = new double[size];
+		pos = -1;
+		this->size = size;
 	}
-
- __device__ ~Pilha() {
-	if (atual == NULL) {
-		return;
+	__device__ ~Pilha() {
+		delete[] valor;
 	}
-	
-	while (atual->next != NULL) {
-		puxar();
-	}
-	puxar();
-}
-__device__	void push(double v) {
-		if (atual == NULL) {
-			//cudaMalloc(&atual, sizeof(D_No));
-			atual = new D_No();
-			atual->valor = v;
+	__device__ void push(double v) {
+		if (pos >= size) {
+			//cout << "problema" << endl;
+			return;
 		}
-		else {
-			D_No* aux;
-			//cudaMalloc(&aux, sizeof(D_No));
-			aux = new D_No();
-			aux->valor = v;
-			aux->next = atual;
-			atual = aux;
-		}
-}
-__device__	void puxar() {
-	if (atual != NULL) {
-		D_No* aux = atual;
-		//double res = atual->valor;
-		atual = atual->next;
-		//cudaFree(aux);
-		delete aux;
-		//return res;
+		pos++;
+		valor[pos] = v;
 	}
-	}
-__device__ double top() {
-	if (atual == NULL) {
+	__device__ double top() {
+		if (pos!= -1 && pos<size) {
+			return valor[pos];
+		}	
 		return 0.0;
 	}
-	return atual->valor;
-}
-
+	__device__ void puxar() {
+		if(pos!=-1)
+		pos--;
+	}
 };
 
 __device__ double d_opera(double a, int x) {
@@ -112,6 +83,9 @@ __device__ double d_operaLogic(double a, double b, int x) {
 		return a || b;
 	else if (x == 2)
 		return (bool)a ^ (bool)b;
+	else
+		//		cout << "erro problema 2" << endl;
+		return 0.0;
 }
 //7
 __device__ double d_operaLogic(double a, int x) {
@@ -121,6 +95,9 @@ __device__ double d_operaLogic(double a, int x) {
 		return 1;
 	else if (x == 2)
 		return 0;
+	else
+//		cout << "erro problema 2" << endl;
+	return 0.0;
 }
 //8
 __device__ double d_operaComp(double a, double b, int x) {
@@ -136,26 +113,24 @@ __device__ double d_operaComp(double a, double b, int x) {
 		return a > b;
 	else if (x == 5)
 		return a != b;
+	else
+//		cout << "erro problema 2" << endl;
+		return 0.0;
 }
 //9
-__device__ double d_operaIfElse(double a, double b, int c) {
-	if (a == 0) {
-		return b;
-	}
-	else {
-		return c;
-	}
-}
 
 
 __device__ double avalia(double* expr, int expCounter) {
-	
-	
-	Pilha q;
+	double a;
+	double b;
+	double c;
+	double result;
 	int aux;
+	Pilha q(expCounter);
+	
 	//int countAlpha = 0;
 	for (int i = 0; i < expCounter; i += 2) {
-		double result = 0.0;
+		result = 0.0;
 		switch ((int)expr[i]) {
 		case 0:
 		{
@@ -164,35 +139,40 @@ __device__ double avalia(double* expr, int expCounter) {
 		break;
 		case 1:// + - * / pow !
 		{
-			double b = q.top();
+			b = q.top();
 			q.puxar();
-			double d = q.top();
+			a = q.top();
 			q.puxar();
-			result = d_opera(d, b, expr[i + 1]);
+			result = d_opera(a, b, expr[i + 1]);
 			q.push(result);
 		}
 		break;
 		case 2:// log exp sqrt
 		{
-			double n = q.top();
+			a = q.top();
 			q.puxar();
-			result = d_opera(n, expr[i + 1]);
+			result = d_opera(a, expr[i + 1]);
 			q.push(result);
 		}
 		break;
 		case 6:// && || xor
 		{
-			double a = q.top();
+			a = q.top();
 			q.puxar();
-			double b = q.top();
+			b = q.top();
 			q.puxar();
-			result = d_operaLogic(b, a, expr[i + 1]);
-			q.push(result);
+			c = expr[i + 1];
+			if (c == 0)
+				q.push((bool)(a && b));
+			else if (c == 1)
+				q.push((bool)(a || b));
+			else
+				q.push((bool)a ^ (bool)b);
 		}
 		break;
 		case 7:
 		{
-			double a = q.top();
+			a = q.top();
 			q.puxar();
 			result = d_operaLogic(a, expr[i + 1]);
 			q.push(result);
@@ -200,24 +180,27 @@ __device__ double avalia(double* expr, int expCounter) {
 		break;
 		case 8:
 		{
-			double a = q.top();
+			a = q.top();
 			q.puxar();
-			double b = q.top();
+			b = q.top();
 			q.puxar();
 			result = d_operaComp(b, a, expr[i + 1]);
 			q.push(result);
 		}
 		break;
-		case 9:
+		case 9://if else
 		{
-			double a = q.top();
+			a = q.top();
 			q.puxar();
-			double b = q.top();
+			b = q.top();
 			q.puxar();
-			double c = q.top();
+			c = q.top();
 			q.puxar();
-			result = d_operaIfElse(a, b, c);
-			q.push(result);
+			if (a == 0.0) {
+				q.push(b);
+			}else {
+				q.push(c);
+			}
 		}
 		}
 		if (isnan(result) || isinf(result)) {
@@ -226,7 +209,8 @@ __device__ double avalia(double* expr, int expCounter) {
 	}
 
 	double resultado = q.top();
-	// resultado = 0.0;
+	
+	//double resultado = 0.0;
 	return resultado;
 }
 
@@ -254,9 +238,45 @@ __device__ double treeResult(double* var,double* exp,int expCounter) {
 
 
 
-__global__ void kernelObj(Database* d_dados, Device_Subject** d_pop) {
-	if (blockIdx.x < gridDim.x) {
+//__global__ void kernelObj(Database* d_dados, Device_Subject** d_pop) {
+//	if (blockIdx.x < gridDim.x) {
+//		Device_Subject* d_ind = d_pop[blockIdx.x];
+//		d_ind->vp = d_ind->fp = d_ind->fn = d_ind->vn = 0;
+//		for (int i = 0; i < d_dados->trainCount; i++) {
+//			int id = d_dados->training[i];
+//			double yReal = d_dados->results[id];
+//			double yPredict = treeResult(d_dados->values[id], d_ind->d_tree_exp, d_ind->d_tree_countExp);
+//			if (yPredict != yReal) {
+//				if (yReal == 0.0) {
+//					d_ind->fp++;
+//				}
+//				else {
+//					d_ind->fn++;
+//				}
+//
+//			}
+//			else {
+//				if (yReal == 0.0) {
+//					d_ind->vn++;
+//
+//				}
+//				else {
+//					d_ind->vp++;
+//				}
+//			}
+//			
+//		}
+//	d_ind->erro = ((double)(d_ind->fn + d_ind->fp) / d_dados->trainCount) * 100;
+//
+//	}
+//
+//}
+
+
+__global__ void kernelObj2(Database* d_dados, Device_Subject** d_pop) {
+	if (blockIdx.x < gridDim.x && blockIdx.y < gridDim.y) {
 		Device_Subject* d_ind = d_pop[blockIdx.x];
+
 		d_ind->vp = d_ind->fp = d_ind->fn = d_ind->vn = 0;
 		for (int i = 0; i < d_dados->trainCount; i++) {
 			int id = d_dados->training[i];
@@ -280,9 +300,9 @@ __global__ void kernelObj(Database* d_dados, Device_Subject** d_pop) {
 					d_ind->vp++;
 				}
 			}
-			
+
 		}
-	d_ind->erro = ((double)(d_ind->fn + d_ind->fp) / d_dados->trainCount) * 100;
+		d_ind->erro = ((double)(d_ind->fn + d_ind->fp) / d_dados->trainCount) * 100;
 
 	}
 
@@ -293,6 +313,7 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 	Device_Subject** d_pop;
 	Device_Subject** aux;
 	size_t tam2;
+	cudaError erro;
 	int tamTreino = this->banco_dados->trainCount;
 	int tamPop = h_conf->popSize;
 	int tam = fim - ini;
@@ -304,14 +325,24 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 		Device_Subject* sub = new Device_Subject();
 		sub->iniDeviceTree(pop[i + ini]);
 		
-		cudaMalloc(&aux[i], sizeof(Device_Subject));
-		cudaMemcpy(aux[i],sub,sizeof(Device_Subject),cudaMemcpyHostToDevice);
-		
+	erro=	cudaMalloc(&aux[i], sizeof(Device_Subject));
+	if (erro) {
+		cout << "erro: " << cudaGetErrorString(erro) << endl;
+	}
+	erro=	cudaMemcpy(aux[i],sub,sizeof(Device_Subject),cudaMemcpyHostToDevice);
+	if (erro) {
+		cout << "erro: " << cudaGetErrorString(erro) << endl;
+	}
 	}
 
 	cudaMalloc(&d_pop, tam2);
+	if (erro) {
+		cout << "erro: " << cudaGetErrorString(erro) << endl;
+	}
 	cudaMemcpy(d_pop, aux, tam2, cudaMemcpyHostToDevice);
-	
+	if (erro) {
+		cout << "erro: " << cudaGetErrorString(erro) << endl;
+	}
 	
 	
 	//executando
@@ -320,14 +351,17 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 	dim3 block(tamPop);
 	
 	kernelObj<<<block, 1>>>(this->d_banco_dados, d_pop);
-	Device_Subject** tst = new Device_Subject*[tam];
-	cudaMemcpy(tst, d_pop, tam2, cudaMemcpyDeviceToHost);
-	cudaError erro = cudaGetLastError();
-	
+	erro = cudaGetLastError();
+	if (erro) {
+		cout << "erro: " << cudaGetErrorString(erro) << endl;
+	}
 	for (int i = 0; i < tam; i++) {
 		Device_Subject novo;
 		Subject* atual = pop[i + ini];
-		cudaMemcpy(&novo, aux[i], sizeof(Device_Subject), cudaMemcpyDeviceToHost);
+		erro = cudaMemcpy(&novo, aux[i], sizeof(Device_Subject), cudaMemcpyDeviceToHost);
+		if (erro) {
+			cout << "erro: " << cudaGetErrorString(erro) << endl;
+		}
 		atual->fitnessLS = novo.erro;
 		atual->treino_vp = novo.vp;
 		atual->treino_fp = novo.fp;
@@ -335,7 +369,7 @@ void Search::GPUcalcFitnessLS(int ini,int fim) {
 		atual->treino_vn = novo.vn;
 		novo.destDeviceTree();
 		cudaFree(aux[i]);
-		atual->complexity();
+		
 	}
 //descaregando da GPU
 	
@@ -644,10 +678,13 @@ void Search::Operate() {
 
 	GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2);
 	
-
 	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
-		calcFitnessLS(pop[i]);
+	pop[i]->complexity();
 	}
+
+	/*for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
+		calcFitnessLS(pop[i]);
+	}*/
 	
 	
 };

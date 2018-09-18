@@ -17,6 +17,9 @@ public:
 	void iniDeviceTree(Subject* sub);
 	void destDeviceTree();
 	__host__ __device__ Device_Subject();
+	__host__ __device__ ~Device_Subject() {
+
+	}
 	
 
 };
