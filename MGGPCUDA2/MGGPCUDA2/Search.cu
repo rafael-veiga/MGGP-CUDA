@@ -13,39 +13,60 @@
 
 using namespace std;
 
+// variaveis globais
+double* d_fit;
+
+struct Nod {
+	double valor;
+	Nod* next;
+};
+
 class Pilha {
 private:
-	int size;
-	int pos;
-	double* valor;
+	Nod * atual;
 public:
-	__device__ Pilha(int size) {
-		valor = new double[size];
-		pos = -1;
-		this->size = size;
+	__device__ Pilha() {
+		atual = NULL;
 	}
 	__device__ ~Pilha() {
-		delete[] valor;
+		if (atual != NULL) {
+			while (atual->next != NULL) {
+				Nod* aux = atual;
+				atual = atual->next;
+				delete aux;
+			}
+			delete atual;
+		}
 	}
 	__device__ void push(double v) {
-		if (pos >= size) {
-			//cout << "problema" << endl;
-			return;
+		if (atual == NULL) {
+			atual = new Nod;
+			atual->next = NULL;
+			atual->valor = v;
 		}
-		pos++;
-		valor[pos] = v;
+		else {
+			Nod* aux = new Nod;
+			aux->next = atual;
+			aux->valor = v;
+			atual = aux;
+		}
 	}
-	__device__ double top() {
-		if (pos!= -1 && pos<size) {
-			return valor[pos];
-		}	
-		return 0.0;
+	__device__ void puxar(){
+		Nod* aux;
+		aux = atual;
+		atual = atual->next;
+		delete aux;
 	}
-	__device__ void puxar() {
-		if(pos!=-1)
-		pos--;
+	__device__ double top(){
+		if (atual != NULL) {
+			return atual->valor;
+		}
+		else {
+			return 0.0;
+		}
 	}
 };
+
 
 __device__ double d_opera(double a, int x) {
 	if (x == 0) //log
@@ -117,24 +138,20 @@ __device__ double d_operaComp(double a, double b, int x) {
 //		cout << "erro problema 2" << endl;
 		return 0.0;
 }
-//9
 
 
-__device__ double avalia(double* expr, int expCounter) {
+__device__ double treeResult(double* var, double* exp, int expCounter) {
+	double result=0.0;
 	double a;
 	double b;
 	double c;
-	double result;
-	int aux;
-	Pilha q(expCounter);
-	
-	//int countAlpha = 0;
+
+	Pilha q;
 	for (int i = 0; i < expCounter; i += 2) {
-		result = 0.0;
-		switch ((int)expr[i]) {
+		switch ((int)exp[i]) {
 		case 0:
 		{
-			q.push(expr[i + 1]);
+			q.push(exp[i + 1]);
 		}
 		break;
 		case 1:// + - * / pow !
@@ -143,7 +160,7 @@ __device__ double avalia(double* expr, int expCounter) {
 			q.puxar();
 			a = q.top();
 			q.puxar();
-			result = d_opera(a, b, expr[i + 1]);
+			result = d_opera(a, b, exp[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -151,8 +168,20 @@ __device__ double avalia(double* expr, int expCounter) {
 		{
 			a = q.top();
 			q.puxar();
-			result = d_opera(a, expr[i + 1]);
+			result = d_opera(a, exp[i + 1]);
 			q.push(result);
+		}
+		break;
+		case 3:
+		{
+			q.push(var[(int)exp[i + 1]]);
+
+
+		}
+		break;
+		case 5:
+		{
+			q.push(exp[i + 1]);
 		}
 		break;
 		case 6:// && || xor
@@ -161,7 +190,7 @@ __device__ double avalia(double* expr, int expCounter) {
 			q.puxar();
 			b = q.top();
 			q.puxar();
-			c = expr[i + 1];
+			c = exp[i + 1];
 			if (c == 0)
 				q.push((bool)(a && b));
 			else if (c == 1)
@@ -174,7 +203,7 @@ __device__ double avalia(double* expr, int expCounter) {
 		{
 			a = q.top();
 			q.puxar();
-			result = d_operaLogic(a, expr[i + 1]);
+			result = d_operaLogic(a, exp[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -184,7 +213,7 @@ __device__ double avalia(double* expr, int expCounter) {
 			q.puxar();
 			b = q.top();
 			q.puxar();
-			result = d_operaComp(b, a, expr[i + 1]);
+			result = d_operaComp(b, a, exp[i + 1]);
 			q.push(result);
 		}
 		break;
@@ -198,7 +227,8 @@ __device__ double avalia(double* expr, int expCounter) {
 			q.puxar();
 			if (a == 0.0) {
 				q.push(b);
-			}else {
+			}
+			else {
 				q.push(c);
 			}
 		}
@@ -206,140 +236,102 @@ __device__ double avalia(double* expr, int expCounter) {
 		if (isnan(result) || isinf(result)) {
 			return INFINITY;
 		}
-	}
 
+		}
 	double resultado = q.top();
-	
+
 	//double resultado = 0.0;
 	return resultado;
-}
-
-__device__ double treeResult(double* var,double* exp,int expCounter) {
-	double result = 0;
-	double* a = new double[expCounter];
-	for (int i = 0; i < expCounter; i += 2) {
-		a[i] = exp[i];
-		a[i + 1] = exp[i + 1];
-		if (a[i] == 3.0) {
-			a[i] = 0.0;
-			a[i + 1] = var[(int)a[i + 1]];
-		}
-		if (a[i] == 5.0) {
-			a[i] = 0.0;
-		}
 	}
-
-	result = avalia(a, expCounter);
-	delete[] a;
-	return result;
-	//return var[0];
-
-}
-
-
-
-//__global__ void kernelObj(Database* d_dados, Device_Subject** d_pop) {
-//	if (blockIdx.x < gridDim.x) {
-//		Device_Subject* d_ind = d_pop[blockIdx.x];
-//		d_ind->vp = d_ind->fp = d_ind->fn = d_ind->vn = 0;
-//		for (int i = 0; i < d_dados->trainCount; i++) {
-//			int id = d_dados->training[i];
-//			double yReal = d_dados->results[id];
-//			double yPredict = treeResult(d_dados->values[id], d_ind->d_tree_exp, d_ind->d_tree_countExp);
-//			if (yPredict != yReal) {
-//				if (yReal == 0.0) {
-//					d_ind->fp++;
-//				}
-//				else {
-//					d_ind->fn++;
-//				}
-//
-//			}
-//			else {
-//				if (yReal == 0.0) {
-//					d_ind->vn++;
-//
-//				}
-//				else {
-//					d_ind->vp++;
-//				}
-//			}
-//			
-//		}
-//	d_ind->erro = ((double)(d_ind->fn + d_ind->fp) / d_dados->trainCount) * 100;
-//
-//	}
-//
-//}
-
+	 
 
 __global__ void kernelObj2(Database* d_dados, Device_Subject** d_pop, double* d_res) {
 	if (blockIdx.x < gridDim.x && blockIdx.y < gridDim.y) {
 		Device_Subject* d_ind = d_pop[blockIdx.x];
 		int id = d_dados->training[blockIdx.y];
-		 d_res[blockIdx.x] = treeResult(d_dados->values[id], d_ind->d_tree_exp, d_ind->d_tree_countExp);
+		 d_res[blockIdx.y*gridDim.x + blockIdx.x] = treeResult(d_dados->values[id], d_ind->d_tree_exp, d_ind->d_tree_countExp);
 	}
-
 }
-void Search::GPUcalcFitnessLS(int ini, int fim, double* d_res) {
+
+__global__ void kernalfit(Database* d_dados, double* d_res, double* d_fit) {
+	if (blockIdx.x < gridDim.x) {
+		int16_t vp, fp, fn, vn;
+		vp = fp = fn = vn = 0;
+		for (int i = 0; i < d_dados->trainCount; i++) {
+			int id = d_dados->training[i];
+			double ver = d_dados->results[id];
+			double predito = d_res[i*gridDim.x + blockIdx.x];
+			if (predito != ver) {
+								if (ver == 0.0) {
+									fp++;
+								}
+								else {
+									fn++;
+								}
+				
+							}
+							else {
+								if (ver == 0.0) {
+									vn++;
+				
+								}
+								else {
+									vp++;
+								}
+							}
+		}
+
+		d_fit[blockIdx.x] = ((double)(fn + fp) / d_dados->trainCount) * 100;
+	}
+}
+void Search::GPUcalcFitnessLS(int ini, int fim, double* d_res, double* h_res) {
 	Device_Subject** d_pop;
 	Device_Subject** aux;
 	size_t tam2;
-	cudaError erro;
 	int tamTreino = this->banco_dados->trainCount;
 	int tamPop = h_conf->popSize;
 	int tam = fim - ini;
 	aux = new Device_Subject*[tam];
 	tam2 = sizeof(Device_Subject*)*tam;
-	cudaSetDevice(0);
+	//cudaSetDevice(0);
 	//carregando na GPU
 	for (int i = 0; i < tam; i++) {
 		Device_Subject* sub = new Device_Subject();
 		sub->iniDeviceTree(pop[i + ini]);
 
-		erro = cudaMalloc(&aux[i], sizeof(Device_Subject));
-		if (erro) {
-			cout << "erro: " << cudaGetErrorString(erro) << endl;
-		}
-		erro = cudaMemcpy(aux[i], sub, sizeof(Device_Subject), cudaMemcpyHostToDevice);
-		if (erro) {
-			cout << "erro: " << cudaGetErrorString(erro) << endl;
-		}
+		cudaMalloc(&aux[i], sizeof(Device_Subject));
+		
+		cudaMemcpy(aux[i], sub, sizeof(Device_Subject), cudaMemcpyHostToDevice);
+		
 	}
 
 	cudaMalloc(&d_pop, tam2);
-	if (erro) {
-		cout << "erro: " << cudaGetErrorString(erro) << endl;
-	}
+	
 	cudaMemcpy(d_pop, aux, tam2, cudaMemcpyHostToDevice);
-	if (erro) {
-		cout << "erro: " << cudaGetErrorString(erro) << endl;
-	}
+	
 
 
 	//executando
 
 	dim3 block(tamPop, tamTreino);
 	//dim3 block(tamPop);
-
-	kernelObj2<<<block, 1 >> >(this->d_banco_dados, d_pop,d_res);
-	erro = cudaGetLastError();
-	if (erro) {
-		cout << "erro: " << cudaGetErrorString(erro) << endl;
-	}
-
 	
-
+	kernelObj2<<<block, 1>>>(this->d_banco_dados, d_pop, d_res);
+	cudaThreadSynchronize();
+	kernalfit<<<tamPop, 1 >>>(this->d_banco_dados, d_res,d_fit);
+	cudaThreadSynchronize();
+	cudaMemcpy(h_res, d_fit, sizeof(double)*tamPop, cudaMemcpyDeviceToHost);
+	//???
 	for (int i = 0; i < tam; i++) {
+		if (h_res[i] < 0.0 || h_res[i] > 100.0) {
+			cudaError erro = cudaGetLastError();
+			cout << "erro" << endl;
+		}
 		Device_Subject novo;
 		Subject* atual = pop[i + ini];
-		erro = cudaMemcpy(&novo, aux[i], sizeof(Device_Subject), cudaMemcpyDeviceToHost);
-		if (erro) {
-			cout << "erro: " << cudaGetErrorString(erro) << endl;
-		}
+		atual->fitnessLS = h_res[i];
 		novo.destDeviceTree();
 		cudaFree(aux[i]);
-
 	}
 	//descaregando da GPU
 
@@ -483,10 +475,12 @@ Search::Search(Database* banco_dados, Database* d_banco) {
 
 void Search::doMonoSearch() {
 	double* d_res;
-
+	double* h_res = new double[banco_dados->trainCount*h_conf->popSize];
+	cudaMalloc(&d_fit, sizeof(double)*h_conf->popSize);
 	cudaError erro = cudaMalloc(&d_res, banco_dados->trainCount*h_conf->popSize * sizeof(double));
 	if (erro)
 		cout << "nao conseguio alocar d_res" << endl;
+
 	pop = new Subject*[h_conf->popSize * 2];
 	convergence = new double[h_conf->iterations];
 
@@ -502,7 +496,7 @@ void Search::doMonoSearch() {
 	int size = (h_conf->popSize * h_conf->elitism);
 
 	for (int it = 0; it < h_conf->iterations; it++) {
-		Operate(d_res);
+		Operate(d_res, h_res);
 		sort(pop, pop + h_conf->popSize, sortFit);
 		sort(pop + h_conf->popSize, pop + h_conf->popSize * 2, sortFit);
 
@@ -543,26 +537,15 @@ void Search::doMonoSearch() {
 		cout << endl;
 	}
 
-	//    double diff = abs(convergence[conf->iterations - 1]) + 1;
-	//    double max = convergence[conf->iterations - 1] < 0 ? convergence[0] + convergence[conf->iterations - 1] : convergence[0];
-	//    cout << diff << " " << max << endl;
-	//    cin.get();
-	//
-	//    for(int i = 0; i < conf->iterations; i += conf->iterations * .1){
-	//        cout << convergence[i] << endl;
-	////        for(int j = 0; j < convergence[i] + diff; j += max * .1){
-	////            cout << "-";
-	////        }
-	////        cout << "." << endl;
-	//    }
+	delete[] h_res;
 };
 
 void Search::doMultiSearch() {
 	double* d_res;
+	double* h_res = new double[banco_dados->trainCount];
+	cudaMalloc(&d_fit, sizeof(double)*h_conf->popSize);
+	cudaMalloc(&d_res, banco_dados->trainCount*h_conf->popSize * sizeof(double));
 	
-	cudaError erro = cudaMalloc(&d_res, banco_dados->trainCount*h_conf->popSize * sizeof(double));
-	if (erro)
-		cout << "nao conseguio alocar d_res" << endl;
 	pop = new Subject*[h_conf->popSize * 2];
 	convergence = new double[h_conf->iterations];
 
@@ -580,7 +563,7 @@ void Search::doMultiSearch() {
 	//    double old = 0;
 	
 	for (int it = 0; it < h_conf->iterations; it++) {
-		Operate(d_res);
+		Operate(d_res, h_res);
 		int size = h_conf->popSize * 2;
 		calcRank(size);
 		// apagar piores
@@ -675,6 +658,9 @@ void Search::doMultiSearch() {
 	for (int i = 0; i<banco_dados->validCount; i++) {
 		cout << banco_dados->results[banco_dados->validation[i]] << ";";
 	}
+	delete[] h_res;
+	cudaFree(d_res);
+	cudaFree(d_fit);
 };
 
 int Search::tournamentMono(int a, int b) {
@@ -697,7 +683,7 @@ int Search::tournamentMulti(int a, int b) {
 	}
 }
 
-void Search::Operate(double* d_res) {
+void Search::Operate(double* d_res, double* h_res) {
 	//instanciar
 	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i += 2) {
 		pop[i] = (new Subject());
@@ -726,10 +712,10 @@ void Search::Operate(double* d_res) {
 	//calcFitnessLS 
 	//paralelizar
 
-	GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2,d_res);
+	GPUcalcFitnessLS(h_conf->popSize, h_conf->popSize * 2,d_res, h_res);
 	
 	for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {
-	pop[i]->complexity();
+	pop[i]->complex =pop[i]->complexity();
 	}
 
 	/*for (int i = h_conf->popSize; i < h_conf->popSize * 2; i++) {

@@ -45,12 +45,12 @@ public:
 
 	Search(Database* banco_dados, Database* d_banco);
 	~Search();
-	void GPUcalcFitnessLS(int ini, int fim, double* d_res);
+	void GPUcalcFitnessLS(int ini, int fim, double* d_res, double* h_res);
 	void doMonoSearch();
 	void doMultiSearch();
 	int tournamentMono(int a, int b);
 	int tournamentMulti(int a, int b);
-	void Operate(double* d_res);
+	void Operate(double* d_res, double* h_res);
 	//void updateParetoAux(Subject* a);
 	void calcRank(int size);
 	void calcRankTest(int size);

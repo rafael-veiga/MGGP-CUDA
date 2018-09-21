@@ -39,7 +39,7 @@ public:
 	__host__ __device__ Subject();
 	__host__ __device__ Subject(Tree* n);
 	
-	double complexity();
+	int complexity();
 	__host__ __device__ ~Subject();
 	void print();
 	

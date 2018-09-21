@@ -33,7 +33,7 @@ Subject::~Subject() {
 	delete tree;
 };
 
-double Subject::complexity() {
+int Subject::complexity() {
 	if (h_conf->complexity == 0)
 		return tree->high;
 	else if (h_conf->complexity == 1)
